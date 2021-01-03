@@ -38,11 +38,11 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum HangmanEvent {
-     GameCreate(HangmanGame), Login, Sync(u64, Guess)
+     GameCreate(HangmanGame), Login, Sync(u64, Guess), JoinGame(u64)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum HangmanEventResponse {
-    GameCreated(u64), LoginSuccess(User), LoginFailure,
+    GameCreated(u64), LoginSuccess(User), LoginFailure, GameJoined(HangmanGame),
     Ok, Err
 }

@@ -2,8 +2,11 @@ use sfml::{graphics::*, window::*, system::*};
 use hangmanstructs::*;
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
+use crate::game::GameScene;
 use std::net::UdpSocket;
+use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
     // UI elements
     title_text: Text<'a>,
@@ -11,14 +14,16 @@ pub struct NewGameWizardScene<'a> {
     guess_word: Text<'a>,
     word_box: RectangleShape<'a>,
     vertices: Box<[Vertex]>,
+    client: &'a HangmanClient<'a>,
 
 
     pub guess_str: String,
     pub max_guesses: u16,
     pub mode: GameMode,
+    pub next_scene: bool,
 
 
-    wizard: WizardStatus
+    wizard: WizardStatus,
 }
 impl<'a> NewGameWizardScene<'a> {
     fn select_triangle(vshift_x: f32, vshift_y: f32) -> Box<[Vertex]> {
@@ -30,7 +35,7 @@ impl<'a> NewGameWizardScene<'a> {
         ])
     }
 
-    pub fn new(font: &'a Font) -> NewGameWizardScene<'a> {
+    pub fn new(client: &'a HangmanClient<'a>, font: &'a Font) -> NewGameWizardScene<'a> {
         let mut guess_str = String::from("");
 
         let mut text = Text::new("MultiHangman", font, 24);
@@ -59,20 +64,25 @@ impl<'a> NewGameWizardScene<'a> {
 
             guess_str,
             max_guesses: 0,
-            mode: GameMode::MultiGuess,
+            mode: GameMode::FastestGuess, // Default selected
             wizard: WizardStatus::Word,
-            vertices: vertices
-
-
-
+            vertices: vertices,
+            next_scene: false,
+            client
         }
 
     }
 
 
+
 }
 
-impl<'a> Scene for NewGameWizardScene<'a> {
+impl<'a> Scene<'a> for NewGameWizardScene<'a> {
+
+    fn next_scene(&self) -> bool {
+        self.next_scene
+    } 
+
     fn draw(&self, window: &mut RenderWindow) {
         // use window.draw to draw stuff
         window.clear(Color::WHITE);
@@ -164,13 +174,12 @@ impl<'a> Scene for NewGameWizardScene<'a> {
                     },
                     WizardStatus::Mode => {
                         // self.new_game(self.guess_word, self.max_guesses, self.mode)
-                        let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
 
-                        let user = client.user.clone().unwrap();
+                        let user = self.client.user.clone().unwrap();
                         let game = HangmanGame::from(self.guess_str.clone(), self.max_guesses, user, self.mode.clone());
                         // TODO ^ make that not clone
 
-                        let create_game_response = client.send_event(HangmanEvent::GameCreate(game)).unwrap();
+                        let create_game_response = self.client.send_event(HangmanEvent::GameCreate(game)).unwrap();
                         println!("create game response is {:?}", create_game_response);
                         let mut game_id = 0;
 
@@ -181,10 +190,7 @@ impl<'a> Scene for NewGameWizardScene<'a> {
                         }
 
 
-
-
-
-
+                        self.next_scene = true;
 
 
                     }
@@ -195,6 +201,7 @@ impl<'a> Scene for NewGameWizardScene<'a> {
     }
 }
 
+#[derive(Debug)]
 enum WizardStatus {
     Word, MaxGuesses, Mode
 }

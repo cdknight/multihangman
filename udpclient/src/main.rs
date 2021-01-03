@@ -4,7 +4,10 @@ use std::net::UdpSocket;
 use std::str;
 use hangmanstructs::*;
 use udpclient::newgamewizard::NewGameWizardScene;
+use udpclient::game::GameScene;
 use udpclient::Scene;
+use udpclient::hangmanclient::HangmanClient;
+use std::rc::Rc;
 
 use sfml::{graphics::*, window::*};
 const font_path: &'static str = "/usr/share/fonts/adobe-source-han-sans/SourceHanSans-Bold.ttc";
@@ -18,9 +21,18 @@ fn main() -> std::io::Result<()> {
     );
 
     let font = Font::from_file(font_path).unwrap();
-    let mut scene = NewGameWizardScene::new(&font);
+    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
+
+    let mut scenes: Vec<Box<Scene>> = vec![
+        Box::new(NewGameWizardScene::new(&client, &font)),
+        Box::new(GameScene::new(&client, &font))
+    ];
+
+    let mut sceneindex = 0;
+
 
     'mainloop: loop {
+        let scene = &mut scenes[sceneindex];
         while let Some(ev) = window.poll_event() {
             match ev {
                 Event::Closed |
@@ -33,6 +45,11 @@ fn main() -> std::io::Result<()> {
         }
 
         scene.draw(&mut window);
+
+        if scene.next_scene() {
+            sceneindex+=1;
+        }
+        //println!("{:#?}", scene);
     }
 
     println!("Thanks for playing!");

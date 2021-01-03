@@ -3,6 +3,7 @@ extern crate bincode;
 use std::net::*;
 use hangmanstructs::*;
 
+#[derive(Debug)]
 pub struct HangmanClient<'a> {
     socket: UdpSocket,
     server: &'a str,
