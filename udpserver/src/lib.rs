@@ -14,7 +14,7 @@ pub struct HangmanServer {
 impl HangmanServer {
     pub fn new() -> Result<HangmanServer, std::io::Error> {
 
-        let socket = UdpSocket::bind("127.0.0.1:22565")?;
+        let socket = UdpSocket::bind("0.0.0.0:22565")?;
         let mut games = Mutex::new(vec![]);
         let mut users = Mutex::new(vec![]);
 

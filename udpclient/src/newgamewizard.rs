@@ -52,7 +52,7 @@ impl<'a> NewGameWizardScene<'a> {
         word_box.set_outline_color(Color::rgb(145, 122, 255));
         word_box.set_outline_thickness(4.);
 
-        let vertices = NewGameWizardScene::select_triangle(30., 12.);
+        let vertices = NewGameWizardScene::select_triangle(57., 9.);
 
         NewGameWizardScene {
             title_text: text,
@@ -144,12 +144,12 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                     WizardStatus::Mode => {
                         if unicode == 'a' {
                             self.mode = GameMode::FastestGuess;
-                            self.vertices = NewGameWizardScene::select_triangle(30., 12.);
+                            self.vertices = NewGameWizardScene::select_triangle(57., 9.);
 
                         }
                         else if unicode == 'b' {
                             self.mode = GameMode::MultiGuess;
-                            self.vertices = NewGameWizardScene::select_triangle(50., 48.);
+                            self.vertices = NewGameWizardScene::select_triangle(77., 42.);
                         }
                     },
                     _ => {}
