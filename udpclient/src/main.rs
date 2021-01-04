@@ -8,6 +8,7 @@ use udpclient::game::GameScene;
 use udpclient::Scene;
 use udpclient::hangmanclient::HangmanClient;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 use sfml::{graphics::*, window::*};
 const font_path: &'static str = "/usr/share/fonts/adobe-source-han-sans/SourceHanSans-Bold.ttc";
@@ -21,11 +22,12 @@ fn main() -> std::io::Result<()> {
     );
 
     let font = Font::from_file(font_path).unwrap();
-    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
+    let mut client = Rc::new(RefCell::new(HangmanClient::new("127.0.0.1:22565").unwrap()));
+
 
     let mut scenes: Vec<Box<Scene>> = vec![
-        Box::new(NewGameWizardScene::new(&client, &font)),
-        Box::new(GameScene::new(&client, &font))
+        Box::new(NewGameWizardScene::new(Rc::clone(&client), &font)),
+        Box::new(GameScene::new(Rc::clone(&client), &font))
     ];
 
     let mut sceneindex = 0;

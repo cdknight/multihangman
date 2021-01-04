@@ -12,13 +12,13 @@ pub struct GameScene<'a> {
     /*guess_boxes: Vec<RectangleShape<'a>>,
     guess_chars: Vec<Text<'a>>,*/
 
-    client: &'a HangmanClient<'a>,
+    client: Rc<RefCell<HangmanClient<'a>>>,
     pub next_scene: bool,
 }
 
 impl<'a> GameScene<'a> {
 
-    pub fn new(client: &'a HangmanClient<'a>, font: &'a Font) -> GameScene<'a> {
+    pub fn new(client: Rc<RefCell<HangmanClient<'a>>>, font: &'a Font) -> GameScene<'a> {
 
 
 
@@ -29,6 +29,8 @@ impl<'a> GameScene<'a> {
         let mut attempts_word_box = RectangleShape::new();
         attempts_word_box.set_outline_color(Color::BLACK);
         attempts_word_box.set_outline_thickness(4.);
+
+
 
 
         GameScene {

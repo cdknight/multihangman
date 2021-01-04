@@ -5,6 +5,7 @@ use crate::hangmanclient::HangmanClient;
 use crate::game::GameScene;
 use std::net::UdpSocket;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
@@ -14,7 +15,7 @@ pub struct NewGameWizardScene<'a> {
     guess_word: Text<'a>,
     word_box: RectangleShape<'a>,
     vertices: Box<[Vertex]>,
-    client: &'a HangmanClient<'a>,
+    client: Rc<RefCell<HangmanClient<'a>>>,
 
 
     pub guess_str: String,
@@ -35,7 +36,7 @@ impl<'a> NewGameWizardScene<'a> {
         ])
     }
 
-    pub fn new(client: &'a HangmanClient<'a>, font: &'a Font) -> NewGameWizardScene<'a> {
+    pub fn new(client: Rc<RefCell<HangmanClient<'a>>>, font: &'a Font) -> NewGameWizardScene<'a> {
         let mut guess_str = String::from("");
 
         let mut text = Text::new("MultiHangman", font, 24);
@@ -173,11 +174,13 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                     WizardStatus::Mode => {
                         // self.new_game(self.guess_word, self.max_guesses, self.mode)
 
-                        let user = self.client.user.clone().unwrap();
+                        let mut client_here = self.client.borrow_mut();
+
+                        let user = client_here.user.clone().unwrap();
                         let game = HangmanGame::from(self.guess_str.clone(), self.max_guesses, user, self.mode.clone());
                         // TODO ^ make that not clone
 
-                        let create_game_response = self.client.send_event(HangmanEvent::GameCreate(game)).unwrap();
+                        let create_game_response = client_here.send_event(HangmanEvent::GameCreate(game)).unwrap();
                         println!("create game response is {:?}", create_game_response);
                         let mut game_id = 0;
 
@@ -186,6 +189,18 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                             HangmanEventResponse::Err => panic!("Failed to create game!"),
                             _ => {}
                         }
+
+                        // Join game
+
+                        let join_game_response = client_here.send_event(HangmanEvent::JoinGame(game_id)).unwrap();
+
+                        match join_game_response {
+                            HangmanEventResponse::GameJoined(game) => client_here.game = Some(game),
+                            HangmanEventResponse::Err => panic!("Failed to join game!"),
+                            _ => {}
+                        }
+
+
 
 
                         self.next_scene = true;

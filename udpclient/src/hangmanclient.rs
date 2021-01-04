@@ -7,7 +7,7 @@ use hangmanstructs::*;
 pub struct HangmanClient<'a> {
     socket: UdpSocket,
     server: &'a str,
-    game: Option<HangmanGame>,
+    pub game: Option<HangmanGame>,
     pub user: Option<User>
 }
 
@@ -32,7 +32,7 @@ impl<'a> HangmanClient<'a> {
         Ok(client)
     }
 
-    pub fn send_event(&self, ev: HangmanEvent) -> Result<HangmanEventResponse, std::io::Error> {
+    pub fn send_event(&mut self, ev: HangmanEvent) -> Result<HangmanEventResponse, std::io::Error> {
         let serialized_ev = bincode::serialize(&ev).unwrap(); // Todo DO something with unwrap
 
         self.socket.send_to(&serialized_ev, self.server)?;
