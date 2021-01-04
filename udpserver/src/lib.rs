@@ -51,17 +51,32 @@ impl HangmanServer {
             HangmanEvent::GameCreate(game)  => {
                 server.respond_to_gamecreate_event(&user, game)
             },
+            HangmanEvent::JoinGame(id) => {
+                server.respond_to_joingame_event(&user, id)
+            }
             _ => {Ok(())}
         }
 
 
     }
 
+    pub fn respond_to_joingame_event(&self, user: &User, id: u64) -> Result<(), std::io::Error> {
+        let mut games = self.games.lock().unwrap(); // Rather not lock it (we're only reading from it), but whatever.
+
+        let game_option = games.get(id as usize).cloned(); // Cloning is intentional.
+        if let Some(game) = game_option { // If the game exists
+            self.respond_to_event(&user, HangmanEventResponse::GameJoined(game))
+        }
+        else {
+            self.respond_to_event(&user, HangmanEventResponse::Err)
+        }
+    }
+
     pub fn respond_to_gamecreate_event(&self, user: &User, game: HangmanGame) -> Result<(), std::io::Error>{
         let mut games = self.games.lock().unwrap();
         games.push(game); // Add to vec, the id is the position in the vec
 
-        self.respond_to_event(user, HangmanEventResponse::GameCreated(games.len() as u64))
+        self.respond_to_event(user, HangmanEventResponse::GameCreated(games.len() as u64 - 1))
     }
 
     pub fn respond_to_event(&self, user: &User, event_response: HangmanEventResponse) -> Result<(), std::io::Error>{

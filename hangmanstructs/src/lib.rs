@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::net::SocketAddr;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HangmanGame {
     word: String,
     guesses: Vec<Guess>,
@@ -25,7 +25,7 @@ pub enum GameMode {
     MultiGuess, FastestGuess
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Guess {
     pub guess: String,
     pub user: User
