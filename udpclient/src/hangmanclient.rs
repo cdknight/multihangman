@@ -11,7 +11,6 @@ pub struct HangmanClient<'a> {
     socket: UdpSocket,
     server: &'a str,
     event_recv: Mutex<mpsc::Receiver<HangmanEventResponse>>,
-    listening: RwLock<bool>,
     want_response: RwLock<bool>,
     pub game: Mutex<Option<HangmanGame>>,
     pub user: Mutex<Option<User>>,
@@ -19,7 +18,7 @@ pub struct HangmanClient<'a> {
 }
 
 impl<'a> HangmanClient<'a> {
-    pub fn new(server: &'a str) -> (Result<HangmanClient<'a>, std::io::Error>, mpsc::Sender<HangmanEventResponse>) {
+    pub fn new(server: &'static str) -> Option<Arc<HangmanClient<'static>>> { // Live for the entirety of the program
         let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
         let (thread_send, event_recv) = mpsc::channel();
 
@@ -30,24 +29,22 @@ impl<'a> HangmanClient<'a> {
             game: Mutex::new(None),
             event_queue: Mutex::new(Queue::new()),
             event_recv: Mutex::new(event_recv),
-            listening: RwLock::new(false),
             want_response: RwLock::new(false), // Rudimentary thread communication,
         };
 
+        let client_ref = Arc::new(client);
+        Self::listen(Arc::clone(&client_ref), thread_send); // Listen for events.
+
         // Try to log in
-        let login_response = client.send_event(HangmanEvent::Login).unwrap();
+        let login_response = client_ref.send_event(HangmanEvent::Login).unwrap();
         println!("Login response is {:?}", login_response);
         if let HangmanEventResponse::LoginSuccess(user) = login_response {
-            let mut user_mut = client.user.lock().unwrap();
+            let mut user_mut = client_ref.user.lock().unwrap();
             *user_mut = Some(user);
         }
 
         // Try to poll for events
-
-
-
-
-        (Ok(client), thread_send)
+        Some(Arc::clone(&client_ref))
     }
 
     pub fn send_event(&self, ev: HangmanEvent) -> Result<HangmanEventResponse, std::io::Error> {
@@ -60,19 +57,11 @@ impl<'a> HangmanClient<'a> {
 
 
         let mut response = HangmanEventResponse::Err;
-        if *self.listening.read().unwrap() == false { // The listen thread isn't running
-            let mut response_buffer = [0u8; 65507];
-            let (size, source) = self.socket.recv_from(&mut response_buffer)?;
-            let response_buffer = &response_buffer[0..size];
 
-            response = bincode::deserialize(&response_buffer).unwrap(); // Shadow the response with the deserialized data from the UDP server
-        }
-        else {
-            let mut event_recv_mut = self.event_recv.lock().unwrap();
-            response = event_recv_mut.recv().unwrap();
-            {
-                *self.want_response.write().unwrap() = false;
-            }
+        let mut event_recv_mut = self.event_recv.lock().unwrap();
+        response = event_recv_mut.recv().unwrap();
+        {
+            *self.want_response.write().unwrap() = false;
         }
 
 
@@ -81,8 +70,6 @@ impl<'a> HangmanClient<'a> {
 
     pub fn recv_event(&self, thread_send: mpsc::Sender<HangmanEventResponse>) -> Result<(), std::io::Error>{
         // Add received events to locked queue
-
-        *self.listening.write().unwrap() = true;
 
         let mut response_buffer = [0u8; 65507]; // Largest vec :(
         let (size, source) = self.socket.recv_from(&mut response_buffer)?;
@@ -130,8 +117,6 @@ impl<'a> HangmanClient<'a> {
     }
 
     pub fn listen(client: Arc<HangmanClient<'static>>, thread_send: mpsc::Sender<HangmanEventResponse>) {
-
-
         thread::spawn(move|| {
             loop {
                 let ts_clone = thread_send.clone(); // Clone thread_sender

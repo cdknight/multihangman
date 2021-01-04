@@ -23,12 +23,7 @@ fn main() -> std::io::Result<()> {
     );
 
     let font = Font::from_file(font_path).unwrap();
-    let (mut client, sender) = HangmanClient::new("127.0.0.1:22565");
-
-    let mut client = Arc::new(client.unwrap());
-
-    HangmanClient::listen(Arc::clone(&client), sender);
-
+    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();  // TODO Make the HangmanClient return an Arc
 
     let mut scenes: Vec<Box<Scene>> = vec![
         Box::new(NewGameWizardScene::new(Arc::clone(&client), &font)),
