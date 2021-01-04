@@ -83,7 +83,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
         self.next_scene
     } 
 
-    fn draw(&self, window: &mut RenderWindow) {
+    fn draw(&mut self, window: &mut RenderWindow) {
         // use window.draw to draw stuff
         window.clear(Color::WHITE);
         window.draw(&self.title_text);
@@ -114,9 +114,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                         }
                         self.guess_word.set_string(&self.guess_str);
 
-                        let mut word_box_constraints = self.guess_word.global_bounds();
-                        self.word_box.set_size((word_box_constraints.width+20., word_box_constraints.height+20.));
-                        self.word_box.set_position((word_box_constraints.left-10., word_box_constraints.top-10.));
+                        Scene::update_word_box(&mut self.word_box, &self.guess_word);
                     },
                     WizardStatus::MaxGuesses => {
                         if unicode == 0x08 as char { // Backspace
