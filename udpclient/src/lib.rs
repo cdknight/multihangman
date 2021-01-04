@@ -2,7 +2,7 @@ use sfml::{graphics::*, window::*};
 
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
-    fn handle_event(&mut self, event: Event);
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow);
     fn next_scene(&self) -> bool;
 }
 

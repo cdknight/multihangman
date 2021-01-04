@@ -99,7 +99,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
         window.display();
     }
        
-    fn handle_event(&mut self, event: Event) {
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
         match event {
             Event::TextEntered {unicode} => {
                 match self.wizard {
@@ -173,31 +173,9 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                         let game = HangmanGame::from(self.guess_str.clone(), self.max_guesses, user, self.mode.clone());
                         // TODO ^ make that not clone
 
-                        let create_game_response = self.client.send_event(HangmanEvent::GameCreate(game)).unwrap();
-                        println!("create game response is {:?}", create_game_response);
-                        let mut game_id = 0;
-
-                        match create_game_response {
-                            HangmanEventResponse::GameCreated(id) => game_id = id,
-                            HangmanEventResponse::Err => panic!("Failed to create game!"),
-                            _ => {}
-                        }
-
+                        let game_id = self.client.create_game(game).unwrap();
                         // Join game
-
-                        let join_game_response = self.client.send_event(HangmanEvent::JoinGame(game_id)).unwrap();
-
-                        match join_game_response {
-                            HangmanEventResponse::GameJoined(game) => {
-                                let mut game_mut = self.client.game.lock().unwrap();
-                                *game_mut = Some(game);
-                            },
-                            HangmanEventResponse::Err => panic!("Failed to join game!"),
-                            _ => {}
-                        }
-
-
-
+                        self.client.join_game(game_id);
 
                         self.next_scene = true;
 

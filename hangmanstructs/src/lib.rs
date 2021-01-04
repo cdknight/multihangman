@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use std::net::SocketAddr;
+use std::cmp::PartialEq;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HangmanGame {
@@ -32,6 +33,15 @@ pub struct Guess {
     pub user: User
 }
 
+impl PartialEq for Guess {
+    fn eq(&self, other: &Self) -> bool {
+        if other.guess == self.guess {
+            return true
+        }
+        false
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub ip: SocketAddr // Temporary, till I set up a DB
@@ -45,6 +55,6 @@ pub enum HangmanEvent {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum HangmanEventResponse {
-    GameCreated(u64), LoginSuccess(User), LoginFailure, GameJoined(HangmanGame),
+    GameCreated(u64), LoginSuccess(User), LoginFailure, GameJoined(HangmanGame), SyncRejected, BadGuess,
     Ok, Err
 }

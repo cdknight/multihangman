@@ -71,16 +71,31 @@ impl HangmanServer {
         let mut game_option = games.get_mut(id as usize); // Not cloning this time since I'm not sending the game anywhere but rather just modifying it
 
         if let Some(game) = game_option {
-            self.respond_to_event(&user, HangmanEventResponse::Ok)?;
-            // Broadcast sync to all players of game EXCEPT the one that sent the sync event
-
-            for player in &game.players { // TODO fix naming scheme
-                if player.ip != guess.user.ip { // EXCEPT part
-                    self.send_event(player, HangmanEvent::Sync(id, guess.clone()))?;
-                }
+            if game.guesses.contains(&guess) {
+                println!("Rejecting guess");
+                self.respond_to_event(&user, HangmanEventResponse::SyncRejected)?;
             }
-            game.guesses.push(guess);
+            else {
+                // Broadcast sync to all players of game EXCEPT the one that sent the sync event
+                for player in &game.players { // TODO fix naming scheme
+                    if player.ip != guess.user.ip { // EXCEPT part
+                        self.send_event(player, HangmanEvent::Sync(id, guess.clone()))?;
+                    }
+                }
+                if let Some(guess_position) = game.word.find(&guess.guess) { // Okay if the guess is correct
+                    self.respond_to_event(&user, HangmanEventResponse::Ok)?;
+                }
+                else {
+                    self.respond_to_event(&user, HangmanEventResponse::BadGuess)?; // BadGuess if the guess is incorrect
+                }
 
+                game.guesses.push(guess);
+
+                // Check if guess is correct
+
+
+
+            }
         }
         else {
             self.respond_to_event(&user, HangmanEventResponse::Err)?;

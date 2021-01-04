@@ -4,6 +4,8 @@ use sfml::{graphics::*, window::*};
 use unicode_segmentation::UnicodeSegmentation;
 use std::sync::Arc;
 use hangmanstructs::*;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Debug)]
 pub struct GameScene<'a> {
@@ -16,6 +18,7 @@ pub struct GameScene<'a> {
     client: Arc<HangmanClient<'a>>,
     pub next_scene: bool,
     font: &'a Font,
+    bgcolor: Color
 }
 
 impl<'a> GameScene<'a> {
@@ -30,9 +33,6 @@ impl<'a> GameScene<'a> {
         attempts_word_box.set_outline_color(Color::BLACK);
         attempts_word_box.set_outline_thickness(4.);
 
-
-
-
         GameScene {
             client,
             attempts_banner,
@@ -40,7 +40,8 @@ impl<'a> GameScene<'a> {
             next_scene: false,
             guess_boxes: vec![],
             guess_chars: vec![],
-            font
+            font,
+            bgcolor: Color::WHITE,
 
         }
 
@@ -51,8 +52,6 @@ impl<'a> GameScene<'a> {
         let game = self.client.game.lock().unwrap();
         let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
 
-        self.attempts_banner.set_string(format!("Attempts: {}", game.max_guesses).as_str());
-        Scene::update_word_box(&mut self.attempts_word_box, &self.attempts_banner);
 
 
         // Render guesses → they'll always be updated. (ONLY multiguess [guess together] is implemented for now)
@@ -81,7 +80,27 @@ impl<'a> GameScene<'a> {
 
         // Implement filling the guess_chars with the respective guesses  { may put this in a separate function for multiguess/fastestguess }
 
+        let mut attempts_remaining = game.max_guesses;
+        for guess in &game.guesses {
 
+            // Go through the guesses, find the string's position in the other string, if part of string, then get the respective guess_chars set string to guess, and rerender the word box
+
+            let guess_indices: Vec<_> = game.word.match_indices(&guess.guess).collect();
+            if guess_indices.is_empty() {
+                // Guess was wrong
+                attempts_remaining -= 1;
+            }
+
+            for (guess_position, _) in guess_indices {
+                let mut guess_char = &mut self.guess_chars[guess_position];
+                guess_char.set_string(guess.guess.as_str());
+
+                Scene::update_word_box(&mut self.guess_boxes[guess_position], &guess_char);
+            }
+        }
+
+        self.attempts_banner.set_string(format!("Attempts: {}", attempts_remaining).as_str());
+        Scene::update_word_box(&mut self.attempts_word_box, &self.attempts_banner);
 
 
 
@@ -96,7 +115,7 @@ impl<'a> Scene<'a> for GameScene<'a> {
     fn draw(&mut self, window: &mut RenderWindow) {
         self.update_values();
 
-        window.clear(Color::WHITE);
+        window.clear(self.bgcolor);
         // window.draw(&self.attempts_remaining);
 
         window.draw(&self.attempts_word_box);
@@ -114,26 +133,22 @@ impl<'a> Scene<'a> for GameScene<'a> {
     }
 
 
-    fn handle_event(&mut self, event: Event) {
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
 
         match event {
 
             Event::TextEntered { unicode, .. } => {
 
 
-                let user = self.client.user.lock().unwrap().clone().unwrap();
-                let guess = Guess {
+                println!("Guess! {:?}", unicode.to_string());
+                let sync_response = self.client.sync(unicode.to_string());
+                if let HangmanEventResponse::BadGuess = sync_response { // Flash screen red if the guess was wrong
+                    self.bgcolor = Color::RED;
+                    self.draw(window);
 
-                    user,
-                    guess: unicode.to_string(),
-
-
-                };
-                println!("Guess! {:?}", guess);
-                let game = self.client.game.lock().unwrap();
-                let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
-
-                let sync_response = self.client.send_event(HangmanEvent::Sync(game.id, guess)).unwrap();
+                    thread::sleep(Duration::from_secs(1));
+                    self.bgcolor = Color::WHITE;
+                }
 
             },
             _ => {}

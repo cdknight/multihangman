@@ -6,6 +6,7 @@ use udpclient::game::GameScene;
 use udpclient::Scene;
 use udpclient::hangmanclient::HangmanClient;
 use std::sync::Arc;
+use std::env;
 
 use sfml::{graphics::*, window::*};
 const font_path: &'static str = "/usr/share/fonts/adobe-source-han-sans/SourceHanSans-Bold.ttc";
@@ -19,7 +20,7 @@ fn main() -> std::io::Result<()> {
     );
 
     let font = Font::from_file(font_path).unwrap();
-    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
+    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap(); 
 
     let mut scenes: Vec<Box<dyn Scene>> = vec![
         Box::new(NewGameWizardScene::new(Arc::clone(&client), &font)),
@@ -28,6 +29,11 @@ fn main() -> std::io::Result<()> {
 
     let mut sceneindex = 0;
 
+    if let Some(join_id) = env::args().nth(1) {
+        let game_id: u64 = join_id.parse().expect("A valid game id is required!");
+        client.join_game(game_id);
+        sceneindex += 1;
+    }
 
     'mainloop: loop {
         let scene = &mut scenes[sceneindex];
@@ -39,7 +45,7 @@ fn main() -> std::io::Result<()> {
 
             }
 
-            scene.handle_event(ev);
+            scene.handle_event(ev, &mut window);
         }
 
         scene.draw(&mut window);

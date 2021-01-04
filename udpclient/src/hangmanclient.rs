@@ -47,6 +47,60 @@ impl<'a> HangmanClient<'a> {
         Some(Arc::clone(&client_ref))
     }
 
+    pub fn sync(&self, guess_str: String) -> HangmanEventResponse {
+        let user = self.user.lock().unwrap().clone().unwrap();
+        let mut game = self.game.lock().unwrap();
+        let mut game = game.as_mut().unwrap();
+
+        let guess = Guess {
+            user,
+            guess: guess_str,
+        };
+        let sync = HangmanEvent::Sync(game.id, guess.clone());
+        let sync_response = self.send_event(sync.clone()).unwrap();
+
+        match sync_response {
+            HangmanEventResponse::Ok|HangmanEventResponse::BadGuess => game.guesses.push(guess),
+            _ => {}
+        }
+
+        return sync_response;
+
+
+    }
+
+    pub fn create_game(&self, game: HangmanGame) -> Option<u64> {
+        // Send the game to the server
+        let create_game_response = self.send_event(HangmanEvent::GameCreate(game)).unwrap();
+        println!("create game response is {:?}", create_game_response);
+
+        let mut game_id = 0;
+        match create_game_response {
+            HangmanEventResponse::GameCreated(id) => game_id = id,
+            HangmanEventResponse::Err => return None,
+            _ => {}
+        };
+
+        Some(game_id)
+
+    }
+
+    pub fn join_game(&self, id: u64) -> Result<(), std::io::Error>{
+        let join_game_response = self.send_event(HangmanEvent::JoinGame(id))?;
+
+        match join_game_response {
+            HangmanEventResponse::GameJoined(game) => {
+                let mut game_mut = self.game.lock().unwrap();
+                *game_mut = Some(game);
+            },
+            HangmanEventResponse::Err => panic!("Failed to join game!"),
+            _ => {}
+        }
+
+        Ok(())
+    }
+
+
     pub fn send_event(&self, ev: HangmanEvent) -> Result<HangmanEventResponse, std::io::Error> {
         let serialized_ev = bincode::serialize(&ev).unwrap(); // Todo DO something with unwrap
 
