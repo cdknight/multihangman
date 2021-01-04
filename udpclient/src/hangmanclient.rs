@@ -68,7 +68,7 @@ impl<'a> HangmanClient<'a> {
         }
         else {
             {
-                *self.want_response.write().unwrap() = true;
+                *self.want_response.write().unwrap() = true; // Tell the thread to explicitly serialize HangmanEventResponse so the serializer doesn't get confused
             }
             let mut event_recv_mut = self.event_recv.lock().unwrap();
             response = event_recv_mut.recv().unwrap();
@@ -90,17 +90,17 @@ impl<'a> HangmanClient<'a> {
         let (size, source) = self.socket.recv_from(&mut response_buffer)?;
         let response_buffer = &response_buffer[0..size];
 
-        // Ignore responses.
+        // Ignore responses. Hopefully. TODO just read the want_response and serialize based on that instead of this more complex (yet functional) solution
 
         let event: HangmanEvent = match bincode::deserialize(&response_buffer) {
             bincode::Result::Ok(event) => {
-                if *self.want_response.read().unwrap() {
+                if *self.want_response.read().unwrap() { // Main thread wants data, so serialize and send
                     self.send_response_to_main(thread_send, response_buffer);
                 }
                 event
             },
             bincode::Result::Err(..) => {
-                self.send_response_to_main(thread_send, response_buffer);
+                self.send_response_to_main(thread_send, response_buffer); // Err means couldn't serialize, so it's probably for the main thread's send
                 return Ok(())
             } // return Ok(()) // Basically 'continue'
         };
