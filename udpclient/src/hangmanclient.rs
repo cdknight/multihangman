@@ -31,7 +31,7 @@ impl<'a> HangmanClient<'a> {
             event_queue: Mutex::new(Queue::new()),
             event_recv: Mutex::new(event_recv),
             listening: RwLock::new(false),
-            want_response: RwLock::new(false), // Rudimentary thread communication
+            want_response: RwLock::new(false), // Rudimentary thread communication,
         };
 
         // Try to log in
@@ -54,22 +54,20 @@ impl<'a> HangmanClient<'a> {
         let serialized_ev = bincode::serialize(&ev).unwrap(); // Todo DO something with unwrap
 
         self.socket.send_to(&serialized_ev, self.server)?;
-
-        let mut response_buffer = [0u8; 65507]; // Largest vec :(
+        {
+            *self.want_response.write().unwrap() = true; // Tell the thread to explicitly serialize HangmanEventResponse so the serializer doesn't get confused
+        }
 
 
         let mut response = HangmanEventResponse::Err;
-        if *self.listening.read().unwrap() == false {
-            println!("Here");
+        if *self.listening.read().unwrap() == false { // The listen thread isn't running
+            let mut response_buffer = [0u8; 65507];
             let (size, source) = self.socket.recv_from(&mut response_buffer)?;
             let response_buffer = &response_buffer[0..size];
 
             response = bincode::deserialize(&response_buffer).unwrap(); // Shadow the response with the deserialized data from the UDP server
         }
         else {
-            {
-                *self.want_response.write().unwrap() = true; // Tell the thread to explicitly serialize HangmanEventResponse so the serializer doesn't get confused
-            }
             let mut event_recv_mut = self.event_recv.lock().unwrap();
             response = event_recv_mut.recv().unwrap();
             {
@@ -92,21 +90,34 @@ impl<'a> HangmanClient<'a> {
 
         // Ignore responses. Hopefully. TODO just read the want_response and serialize based on that instead of this more complex (yet functional) solution
 
+        if *self.want_response.read().unwrap() {
+            self.send_response_to_main(thread_send, response_buffer);
+            return Ok(());
+        }
+
+
+        // Real events... unless the server slips up and sends things out of order, which will be royally bad.
+
         let event: HangmanEvent = match bincode::deserialize(&response_buffer) {
             bincode::Result::Ok(event) => {
-                if *self.want_response.read().unwrap() { // Main thread wants data, so serialize and send
-                    self.send_response_to_main(thread_send, response_buffer);
-                }
                 event
             },
-            bincode::Result::Err(..) => {
-                self.send_response_to_main(thread_send, response_buffer); // Err means couldn't serialize, so it's probably for the main thread's send
-                return Ok(())
+            bincode::Result::Err(error) => {
+                // Do something with the error??
+                println!("error happened with receiving event: {:?}", error);
+                return Ok(());  // Definitely shouldn't be return this
             } // return Ok(()) // Basically 'continue'
         };
 
-        let mut queue_mut = self.event_queue.lock().unwrap();
-        queue_mut.queue(event);
+        match event {
+            HangmanEvent::Sync(id, guess) => {
+                let mut game_mut = self.game.lock().unwrap();
+                let mut game_mut = game_mut.as_mut().unwrap();
+
+                game_mut.guesses.push(guess);
+            },
+            _ => {}
+        }
 
         Ok(())
 
@@ -122,11 +133,8 @@ impl<'a> HangmanClient<'a> {
 
 
         thread::spawn(move|| {
-
-            // do things with client Arc
-
             loop {
-                let ts_clone = thread_send.clone();
+                let ts_clone = thread_send.clone(); // Clone thread_sender
                 client.recv_event(ts_clone);
             }
 

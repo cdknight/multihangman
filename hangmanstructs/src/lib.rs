@@ -4,17 +4,18 @@ use std::net::SocketAddr;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HangmanGame {
     pub word: String,
-    guesses: Vec<Guess>,
+    pub guesses: Vec<Guess>,
     pub max_guesses: u16,
     creator: User, // Because the client
     mode: GameMode,
-    id: u64 // Will return this back when a GameCreate event happens
+    pub id: u64, // Will return this back when a GameCreate event happens,
+    pub players: Vec<User>,
 }
 
 impl HangmanGame {
     pub fn from(word: String, max_guesses: u16, creator: User, mode: GameMode) -> HangmanGame {
         HangmanGame {
-            word, guesses: vec![], max_guesses, creator, mode, id: 0
+            word, guesses: vec![], max_guesses, creator, mode, id: 0, players: vec![]
         }
     }
 }

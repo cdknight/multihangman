@@ -5,6 +5,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
 use std::sync::{Arc, RwLock};
+use hangmanstructs::*;
 
 #[derive(Debug)]
 pub struct GameScene<'a> {
@@ -80,11 +81,6 @@ impl<'a> GameScene<'a> {
             }
         }
 
-        // Implement polling for incoming events
-
-       
-
-
         // Implement filling the guess_chars with the respective guesses  { may put this in a separate function for multiguess/fastestguess }
 
 
@@ -122,5 +118,27 @@ impl<'a> Scene<'a> for GameScene<'a> {
 
     fn handle_event(&mut self, event: Event) {
 
+        match event {
+
+            Event::TextEntered { unicode, .. } => {
+
+
+                let user = self.client.user.lock().unwrap().clone().unwrap();
+                let guess = Guess {
+
+                    user,
+                    guess: unicode.to_string(),
+
+
+                };
+                println!("Guess! {:?}", guess);
+                let game = self.client.game.lock().unwrap();
+                let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
+
+                let sync_response = self.client.send_event(HangmanEvent::Sync(game.id, guess)).unwrap();
+
+            },
+            _ => {}
+        }
     }
 }
