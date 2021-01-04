@@ -9,7 +9,6 @@ use std::sync::Arc;
 use std::env;
 
 use sfml::{graphics::*, window::*};
-const font_path: &'static str = "/usr/share/fonts/adobe-source-han-sans/SourceHanSans-Bold.ttc";
 
 fn main() -> std::io::Result<()> {
     let mut window = RenderWindow::new(
@@ -18,6 +17,11 @@ fn main() -> std::io::Result<()> {
         Style::CLOSE,
         &Default::default(),
     );
+
+    let mut font_path = std::env::current_dir().unwrap();
+    font_path.push("Audiowide-Regular.ttf");
+
+    let font_path = font_path.as_path().to_str().unwrap();
 
     let font = Font::from_file(font_path).unwrap();
     let mut client = HangmanClient::new("127.0.0.1:22565").unwrap(); 
