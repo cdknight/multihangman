@@ -3,9 +3,9 @@ use std::net::SocketAddr;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HangmanGame {
-    word: String,
+    pub word: String,
     guesses: Vec<Guess>,
-    max_guesses: u16,
+    pub max_guesses: u16,
     creator: User, // Because the client
     mode: GameMode,
     id: u64 // Will return this back when a GameCreate event happens
@@ -36,9 +36,10 @@ pub struct User {
     pub ip: SocketAddr // Temporary, till I set up a DB
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HangmanEvent {
      GameCreate(HangmanGame), Login, Sync(u64, Guess), JoinGame(u64)
+    // Sync is sent to all users in a game.
 }
 
 #[derive(Serialize, Deserialize, Debug)]
