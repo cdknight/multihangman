@@ -2,11 +2,7 @@ use sfml::{graphics::*, window::*, system::*};
 use hangmanstructs::*;
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
-use crate::game::GameScene;
-use std::net::UdpSocket;
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
@@ -38,7 +34,7 @@ impl<'a> NewGameWizardScene<'a> {
     }
 
     pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> NewGameWizardScene<'a> {
-        let mut guess_str = String::from("");
+        let guess_str = String::from("");
 
         let mut text = Text::new("MultiHangman", font, 24);
         text.set_fill_color(Color::BLACK);
@@ -96,7 +92,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
             },
             WizardStatus::Mode => {
                 window.draw_primitives(&self.vertices, PrimitiveType::Quads, RenderStates::default());
-            }
+            },
             _ => {}
         }
         window.draw(&self.guess_prompt);
@@ -143,9 +139,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
 
                         self.guess_word.set_string(self.max_guesses.to_string().as_str());
 
-                        let mut word_box_constraints = self.guess_word.global_bounds();
-                        self.word_box.set_size((word_box_constraints.width+20., word_box_constraints.height+20.));
-                        self.word_box.set_position((word_box_constraints.left-10., word_box_constraints.top-10.));
+                        Scene::update_word_box(&mut self.word_box, &self.guess_word);
                     },
                     WizardStatus::Mode => {
                         if unicode == 'a' {
@@ -157,7 +151,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                             self.mode = GameMode::MultiGuess;
                             self.vertices = NewGameWizardScene::select_triangle(50., 48.);
                         }
-                    }
+                    },
                     _ => {}
                 }
             },

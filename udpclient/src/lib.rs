@@ -1,7 +1,4 @@
 use sfml::{graphics::*, window::*};
-use hangmanstructs::*;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
@@ -9,9 +6,8 @@ pub trait Scene<'a> {
     fn next_scene(&self) -> bool;
 }
 
-impl<'a> Scene<'a> {
+impl<'a> dyn Scene<'a> {
     fn update_word_box(rect: &mut RectangleShape, text: &'a Text) {
-        let mut word_box = RectangleShape::new();
         let text_bound_box = text.global_bounds();
 
         rect.set_size((text_bound_box.width+20., text_bound_box.height+20.));

@@ -58,7 +58,7 @@ impl<'a> HangmanClient<'a> {
 
         let mut response = HangmanEventResponse::Err;
 
-        let mut event_recv_mut = self.event_recv.lock().unwrap();
+        let event_recv_mut = self.event_recv.lock().unwrap();
         response = event_recv_mut.recv().unwrap();
         {
             *self.want_response.write().unwrap() = false;
@@ -72,7 +72,7 @@ impl<'a> HangmanClient<'a> {
         // Add received events to locked queue
 
         let mut response_buffer = [0u8; 65507]; // Largest vec :(
-        let (size, source) = self.socket.recv_from(&mut response_buffer)?;
+        let (size, _) = self.socket.recv_from(&mut response_buffer)?;
         let response_buffer = &response_buffer[0..size];
 
         // Ignore responses. Hopefully. TODO just read the want_response and serialize based on that instead of this more complex (yet functional) solution
@@ -97,7 +97,7 @@ impl<'a> HangmanClient<'a> {
         };
 
         match event {
-            HangmanEvent::Sync(id, guess) => {
+            HangmanEvent::Sync(_, guess) => {
                 let mut game_mut = self.game.lock().unwrap();
                 let mut game_mut = game_mut.as_mut().unwrap();
 

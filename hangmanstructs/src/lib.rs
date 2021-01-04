@@ -39,7 +39,7 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HangmanEvent {
-     GameCreate(HangmanGame), Login, Sync(u64, Guess), JoinGame(u64)
+     GameCreate(HangmanGame), Login, Sync(u64, Guess), JoinGame(u64), Disconnect
     // Sync is sent to all users in a game.
 }
 

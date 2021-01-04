@@ -1,10 +1,8 @@
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
-use sfml::{graphics::*, window::*, system::*};
-use std::cell::RefCell;
-use std::rc::Rc;
+use sfml::{graphics::*, window::*};
 use unicode_segmentation::UnicodeSegmentation;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use hangmanstructs::*;
 
 #[derive(Debug)]

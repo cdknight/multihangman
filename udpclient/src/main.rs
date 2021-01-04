@@ -1,15 +1,11 @@
 extern crate sfml;
 
-use std::net::UdpSocket;
 use std::str;
-use hangmanstructs::*;
 use udpclient::newgamewizard::NewGameWizardScene;
 use udpclient::game::GameScene;
 use udpclient::Scene;
 use udpclient::hangmanclient::HangmanClient;
-use std::rc::Rc;
-use std::sync::{Arc, RwLock};
-use std::cell::RefCell;
+use std::sync::Arc;
 
 use sfml::{graphics::*, window::*};
 const font_path: &'static str = "/usr/share/fonts/adobe-source-han-sans/SourceHanSans-Bold.ttc";
@@ -23,9 +19,9 @@ fn main() -> std::io::Result<()> {
     );
 
     let font = Font::from_file(font_path).unwrap();
-    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();  // TODO Make the HangmanClient return an Arc
+    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
 
-    let mut scenes: Vec<Box<Scene>> = vec![
+    let mut scenes: Vec<Box<dyn Scene>> = vec![
         Box::new(NewGameWizardScene::new(Arc::clone(&client), &font)),
         Box::new(GameScene::new(Arc::clone(&client), &font))
     ];
