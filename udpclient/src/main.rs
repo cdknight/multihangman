@@ -8,6 +8,7 @@ use udpclient::game::GameScene;
 use udpclient::Scene;
 use udpclient::hangmanclient::HangmanClient;
 use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 use std::cell::RefCell;
 
 use sfml::{graphics::*, window::*};
@@ -22,12 +23,16 @@ fn main() -> std::io::Result<()> {
     );
 
     let font = Font::from_file(font_path).unwrap();
-    let mut client = Rc::new(RefCell::new(HangmanClient::new("127.0.0.1:22565").unwrap()));
+    let (mut client, sender) = HangmanClient::new("127.0.0.1:22565");
+
+    let mut client = Arc::new(client.unwrap());
+
+    HangmanClient::listen(Arc::clone(&client), sender);
 
 
     let mut scenes: Vec<Box<Scene>> = vec![
-        Box::new(NewGameWizardScene::new(Rc::clone(&client), &font)),
-        Box::new(GameScene::new(Rc::clone(&client), &font))
+        Box::new(NewGameWizardScene::new(Arc::clone(&client), &font)),
+        Box::new(GameScene::new(Arc::clone(&client), &font))
     ];
 
     let mut sceneindex = 0;

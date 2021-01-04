@@ -12,3 +12,4 @@ hangmanstructs = { path = "../hangmanstructs"}
 sdl2 = { version = "0.34.3", features = ["ttf"] }
 sfml = "0.15.1"
 unicode-segmentation = "1.7.1"
+queue = "0.3.1"

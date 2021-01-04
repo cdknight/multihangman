@@ -4,6 +4,7 @@ use sfml::{graphics::*, window::*, system::*};
 use std::cell::RefCell;
 use std::rc::Rc;
 use unicode_segmentation::UnicodeSegmentation;
+use std::sync::{Arc, RwLock};
 
 #[derive(Debug)]
 pub struct GameScene<'a> {
@@ -13,14 +14,14 @@ pub struct GameScene<'a> {
     guess_boxes: Vec<RectangleShape<'a>>,
     guess_chars: Vec<Text<'a>>,
 
-    client: Rc<RefCell<HangmanClient<'a>>>,
+    client: Arc<HangmanClient<'a>>,
     pub next_scene: bool,
     font: &'a Font,
 }
 
 impl<'a> GameScene<'a> {
 
-    pub fn new(client: Rc<RefCell<HangmanClient<'a>>>, font: &'a Font) -> GameScene<'a> {
+    pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> GameScene<'a> {
 
         let mut attempts_banner = Text::new("Attempts: ", font, 24);
         attempts_banner.set_fill_color(Color::BLACK);
@@ -48,8 +49,8 @@ impl<'a> GameScene<'a> {
     }
 
     fn update_values(&mut self) {
-        let client_read = self.client.borrow();
-        let game = client_read.game.as_ref().unwrap_or_else(||{panic!("Game doesn't exist yet in the game scene!")});
+        let game = self.client.game.lock().unwrap();
+        let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
 
         self.attempts_banner.set_string(format!("Attempts: {}", game.max_guesses).as_str());
         Scene::update_word_box(&mut self.attempts_word_box, &self.attempts_banner);
@@ -62,7 +63,7 @@ impl<'a> GameScene<'a> {
             self.guess_boxes.clear();
 
             let mut xoffset = 100.;
-            for i in 0..game.word.len() { // This won't work...
+            for i in 0..game.word.len() {
                 let mut guess_letter = Text::new(" ", self.font, 40);
                 guess_letter.set_fill_color(Color::BLACK);
                 guess_letter.set_position((xoffset, 280.));
@@ -79,7 +80,14 @@ impl<'a> GameScene<'a> {
             }
         }
 
-        // Since the chars
+        // Implement polling for incoming events
+
+       
+
+
+        // Implement filling the guess_chars with the respective guesses  { may put this in a separate function for multiguess/fastestguess }
+
+
 
 
 
