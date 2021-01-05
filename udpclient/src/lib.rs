@@ -1,9 +1,17 @@
 use sfml::{graphics::*, window::*};
+use std::sync::Arc;
+use std::rc::Rc;
 
+
+pub mod newgamewizard;
+pub mod game;
+pub mod hangmanclient;
+
+// #[derive(Debug)]
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow);
-    fn next_scene(&self) -> bool;
+    fn next_scene(&self) -> (bool, String);
 }
 
 impl<'a> dyn Scene<'a> {
@@ -16,6 +24,25 @@ impl<'a> dyn Scene<'a> {
 
 }
 
-pub mod newgamewizard;
-pub mod game;
-pub mod hangmanclient;
+pub enum Scenes {
+    NewGameWizardScene, GameScene
+}
+
+/*pub struct DummyScene;
+
+impl<'a> Scene<'a> for DummyScene {
+    fn draw(&mut self, window: &mut RenderWindow) {
+
+    }
+
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
+
+    }
+
+    fn next_scene(&self) -> bool {
+        true
+    }
+    fn make_next_scene(&self, client: Arc<hangmanclient::HangmanClient<'static>>, font: &'static Font) -> Box<Scene<'static>> {
+        Box::new(crate::newgamewizard::NewGameWizardScene::new(client, font))
+    }
+}*/

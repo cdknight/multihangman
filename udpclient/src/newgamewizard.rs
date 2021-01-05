@@ -2,9 +2,12 @@ use sfml::{graphics::*, window::*, system::*};
 use hangmanstructs::*;
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
+use crate::game::GameScene;
+use unicode_categories::UnicodeCategories;
 use std::sync::Arc;
+use std::rc::Rc;
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
     // UI elements
     title_text: Text<'a>,
@@ -14,11 +17,16 @@ pub struct NewGameWizardScene<'a> {
     vertices: Box<[Vertex]>,
     client: Arc<HangmanClient<'a>>,
 
+    rejected_guesses_box: RectangleShape<'a>,
+    rejected_guesses: Text<'a>, // \t and \n?
+
 
     pub guess_str: String,
     pub max_guesses: u16,
     pub mode: GameMode,
-    pub next_scene: bool,
+
+    next_scene: bool,
+    // next_scene: Option<Box<Scene<'a>>>,
 
 
     wizard: WizardStatus,
@@ -54,6 +62,7 @@ impl<'a> NewGameWizardScene<'a> {
 
         let vertices = NewGameWizardScene::select_triangle(57., 9.);
 
+
         NewGameWizardScene {
             title_text: text,
             guess_prompt,
@@ -65,8 +74,12 @@ impl<'a> NewGameWizardScene<'a> {
             mode: GameMode::FastestGuess, // Default selected
             wizard: WizardStatus::Word,
             vertices: vertices,
+            client,
+            rejected_guesses: Text::new("", font, 24),
+            rejected_guesses_box: RectangleShape::new(),
             next_scene: false,
-            client
+
+
         }
 
     }
@@ -77,9 +90,9 @@ impl<'a> NewGameWizardScene<'a> {
 
 impl<'a> Scene<'a> for NewGameWizardScene<'a> {
 
-    fn next_scene(&self) -> bool {
-        self.next_scene
-    } 
+    fn next_scene(&self) -> (bool, String) {
+        (self.next_scene, String::from("GameScene"))
+    }
 
     fn draw(&mut self, window: &mut RenderWindow) {
         // use window.draw to draw stuff
@@ -101,13 +114,13 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
        
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
         match event {
-            Event::TextEntered {unicode} => {
+            Event::TextEntered { unicode, .. } => {
                 match self.wizard {
                     WizardStatus::Word => {
                         if unicode == 0x08 as char { // Backspace
                             self.guess_str.pop();
                         }
-                        else {
+                        else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
                             self.guess_str.push(unicode);
                         }
                         self.guess_word.set_string(&self.guess_str);

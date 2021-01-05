@@ -1,12 +1,19 @@
 extern crate sfml;
 
+#[macro_use]
+extern crate lazy_static;
+
 use std::str;
 use udpclient::newgamewizard::NewGameWizardScene;
 use udpclient::game::GameScene;
 use udpclient::Scene;
+use udpclient::Scenes;
 use udpclient::hangmanclient::HangmanClient;
 use std::sync::Arc;
+use std::rc::Rc;
 use std::env;
+use std::collections::HashMap;
+use std::cell::RefCell;
 
 use sfml::{graphics::*, window::*};
 
@@ -18,45 +25,60 @@ fn main() -> std::io::Result<()> {
         &Default::default(),
     );
 
-    let mut font_path = std::env::current_dir().unwrap();
-    font_path.push("Audiowide-Regular.ttf");
+    // let font_send = Rc::clone(&font);
+    let font = {
+        let mut font_path = std::env::current_dir().unwrap();
+        font_path.push("Audiowide-Regular.ttf");
+        let font_path = font_path.as_path().to_str().unwrap();
 
-    let font_path = font_path.as_path().to_str().unwrap();
+        Font::from_file(font_path).unwrap()
+    };
 
-    let font = Font::from_file(font_path).unwrap();
-    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap(); 
 
-    let mut scenes: Vec<Box<dyn Scene>> = vec![
-        Box::new(NewGameWizardScene::new(Arc::clone(&client), &font)),
-        Box::new(GameScene::new(Arc::clone(&client), &font))
-    ];
+    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
+    let scenes: HashMap<&str, RefCell<Box<Scene>>> = {
+        let mut scenes: HashMap<&str, RefCell<Box<Scene>>> = HashMap::new();
 
-    let mut sceneindex = 0;
+        scenes.insert("NewGameWizardScene", RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client), &font))));
+        scenes.insert("GameScene", RefCell::new(Box::new(GameScene::new(Arc::clone(&client), &font))));
 
-    if let Some(join_id) = env::args().nth(1) {
+        scenes
+    };
+
+    let mut start_scene = String::from("NewGameWizardScene"); // TODO change this to the Scenes enum
+
+    /*if let Some(join_id) = env::args().nth(1) {
         let game_id: u64 = join_id.parse().expect("A valid game id is required!");
         client.join_game(game_id);
         sceneindex += 1;
-    }
+    }*/
 
     'mainloop: loop {
-        let scene = &mut scenes[sceneindex];
-        while let Some(ev) = window.poll_event() {
-            match ev {
-                Event::Closed |
-                Event::KeyPressed { code: Key::Escape, .. }  => break 'mainloop,
-                _ => {}
+        {
+            let mut scene = scenes.get(start_scene.as_str()).unwrap().borrow_mut();
 
+            while let Some(ev) = window.poll_event() {
+                match ev {
+                    Event::Closed |
+                    Event::KeyPressed { code: Key::Escape, .. }  => break 'mainloop,
+                    _ => {}
+
+                }
+
+                scene.handle_event(ev, &mut window);
             }
 
-            scene.handle_event(ev, &mut window);
+            scene.draw(&mut window);
         }
 
-        scene.draw(&mut window);
 
-        if scene.next_scene() {
-            sceneindex+=1;
+        let scene = scenes.get(start_scene.as_str()).unwrap().borrow();
+        let (next_scene, next_scene_nm) = scene.next_scene();
+
+        if next_scene {
+            start_scene = next_scene_nm;
         }
+      
         //println!("{:#?}", scene);
     }
 

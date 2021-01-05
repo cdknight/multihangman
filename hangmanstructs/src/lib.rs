@@ -15,8 +15,9 @@ pub struct HangmanGame {
 
 impl HangmanGame {
     pub fn from(word: String, max_guesses: u16, creator: User, mode: GameMode) -> HangmanGame {
+
         HangmanGame {
-            word, guesses: vec![], max_guesses, creator, mode, id: 0, players: vec![]
+            word: word.trim().to_string(), guesses: vec![], max_guesses, creator, mode, id: 0, players: vec![]
         }
     }
 }

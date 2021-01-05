@@ -6,8 +6,9 @@ use std::sync::Arc;
 use hangmanstructs::*;
 use std::thread;
 use std::time::Duration;
+use unicode_categories::UnicodeCategories;
+use crate::newgamewizard::NewGameWizardScene;
 
-#[derive(Debug)]
 pub struct GameScene<'a> {
     // UI elements
     attempts_word_box: RectangleShape<'a>,
@@ -18,7 +19,7 @@ pub struct GameScene<'a> {
     client: Arc<HangmanClient<'a>>,
     pub next_scene: bool,
     font: &'a Font,
-    bgcolor: Color
+    bgcolor: Color,
 }
 
 impl<'a> GameScene<'a> {
@@ -32,6 +33,7 @@ impl<'a> GameScene<'a> {
         let mut attempts_word_box = RectangleShape::new();
         attempts_word_box.set_outline_color(Color::BLACK);
         attempts_word_box.set_outline_thickness(4.);
+
 
         GameScene {
             client,
@@ -137,7 +139,7 @@ impl<'a> GameScene<'a> {
 
     fn handle_hangman_event(&mut self, event: &HangmanEvent, window: &mut RenderWindow) {
         let mut wrong_guess = false;
-        {
+        { // Have to use a scope since game gets borrowed here, so when we call flash_red the program doesn't know whether or not we're modifying game or something. Could be called by making bgcolor a RefCell.
             let game = self.client.game.lock().unwrap();
             let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
 
@@ -155,8 +157,10 @@ impl<'a> GameScene<'a> {
 }
 
 impl<'a> Scene<'a> for GameScene<'a> {
-    fn next_scene(&self) -> bool {
-        self.next_scene
+
+
+    fn next_scene(&self) -> (bool, String) {
+        (self.next_scene, String::from("NewGameWizardScene"))
     }
 
     fn draw(&mut self, window: &mut RenderWindow) {
@@ -184,7 +188,7 @@ impl<'a> Scene<'a> for GameScene<'a> {
 
         match event {
 
-            Event::TextEntered { unicode, .. } => {
+            Event::TextEntered { unicode, .. } => if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
 
 
                 println!("Guess! {:?}", unicode.to_string());

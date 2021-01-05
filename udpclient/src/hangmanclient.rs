@@ -85,6 +85,7 @@ impl<'a> HangmanClient<'a> {
 
     }
 
+
     pub fn join_game(&self, id: u64) -> Result<(), std::io::Error>{
         let join_game_response = self.send_event(HangmanEvent::JoinGame(id))?;
 
