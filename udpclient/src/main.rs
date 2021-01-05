@@ -36,16 +36,19 @@ fn main() -> std::io::Result<()> {
 
 
     let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
-    let scenes: HashMap<&str, RefCell<Box<Scene>>> = {
-        let mut scenes: HashMap<&str, RefCell<Box<Scene>>> = HashMap::new();
 
-        scenes.insert("NewGameWizardScene", RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client), &font))));
-        scenes.insert("GameScene", RefCell::new(Box::new(GameScene::new(Arc::clone(&client), &font))));
+    // Massively inefficient (:, but I don't know enough about lifetimes to create these Scenes only when they're necessary.
+    // This is inefficient because it creates all the scenes at once instead of only creating them when they're necessary.
+    let scenes: HashMap<Scenes, RefCell<Box<Scene>>> = {
+        let mut scenes: HashMap<Scenes, RefCell<Box<Scene>>> = HashMap::new();
+
+        scenes.insert(Scenes::NewGameWizardScene, RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client), &font))));
+        scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client), &font))));
 
         scenes
     };
 
-    let mut start_scene = String::from("NewGameWizardScene"); // TODO change this to the Scenes enum
+    let mut current_scene = Scenes::NewGameWizardScene; // TODO change this to the Scenes enum
 
     /*if let Some(join_id) = env::args().nth(1) {
         let game_id: u64 = join_id.parse().expect("A valid game id is required!");
@@ -55,7 +58,7 @@ fn main() -> std::io::Result<()> {
 
     'mainloop: loop {
         {
-            let mut scene = scenes.get(start_scene.as_str()).unwrap().borrow_mut();
+            let mut scene = scenes.get(&current_scene).unwrap().borrow_mut();
 
             while let Some(ev) = window.poll_event() {
                 match ev {
@@ -72,13 +75,16 @@ fn main() -> std::io::Result<()> {
         }
 
 
-        let scene = scenes.get(start_scene.as_str()).unwrap().borrow();
-        let (next_scene, next_scene_nm) = scene.next_scene();
+        let scene = scenes.get(&current_scene).unwrap().borrow();
+        let next_scene = scene.next_scene();
 
-        if next_scene {
-            start_scene = next_scene_nm;
+        match next_scene {
+            Scenes::None => {},
+            _ => { // Any other kind of Scene, which means that the scene has indicated it'd like to switch.
+                current_scene = next_scene
+            }
         }
-      
+
         //println!("{:#?}", scene);
     }
 

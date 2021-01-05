@@ -11,7 +11,7 @@ pub mod hangmanclient;
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow);
-    fn next_scene(&self) -> (bool, String);
+    fn next_scene(&self) -> Scenes;
 }
 
 impl<'a> dyn Scene<'a> {
@@ -24,8 +24,9 @@ impl<'a> dyn Scene<'a> {
 
 }
 
+#[derive(PartialEq, Eq, Hash)]
 pub enum Scenes {
-    NewGameWizardScene, GameScene
+    NewGameWizardScene, GameScene, None
 }
 
 /*pub struct DummyScene;

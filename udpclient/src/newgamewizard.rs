@@ -6,6 +6,7 @@ use crate::game::GameScene;
 use unicode_categories::UnicodeCategories;
 use std::sync::Arc;
 use std::rc::Rc;
+use crate::Scenes;
 
 // #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
@@ -90,8 +91,11 @@ impl<'a> NewGameWizardScene<'a> {
 
 impl<'a> Scene<'a> for NewGameWizardScene<'a> {
 
-    fn next_scene(&self) -> (bool, String) {
-        (self.next_scene, String::from("GameScene"))
+    fn next_scene(&self) -> Scenes {
+        if self.next_scene {
+            return Scenes::GameScene;
+        }
+        Scenes::None
     }
 
     fn draw(&mut self, window: &mut RenderWindow) {

@@ -8,6 +8,7 @@ use std::thread;
 use std::time::Duration;
 use unicode_categories::UnicodeCategories;
 use crate::newgamewizard::NewGameWizardScene;
+use crate::Scenes;
 
 pub struct GameScene<'a> {
     // UI elements
@@ -159,8 +160,8 @@ impl<'a> GameScene<'a> {
 impl<'a> Scene<'a> for GameScene<'a> {
 
 
-    fn next_scene(&self) -> (bool, String) {
-        (self.next_scene, String::from("NewGameWizardScene"))
+    fn next_scene(&self) -> Scenes {
+        Scenes::None
     }
 
     fn draw(&mut self, window: &mut RenderWindow) {
