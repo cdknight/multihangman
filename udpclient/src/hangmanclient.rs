@@ -4,7 +4,7 @@ use std::net::*;
 use std::sync::{Arc, RwLock, Mutex, mpsc};
 use hangmanstructs::*;
 use std::thread; // ow
-use queue::Queue;
+use std::collections::VecDeque;
 
 #[derive(Debug)]
 pub struct HangmanClient<'a> {
@@ -14,7 +14,7 @@ pub struct HangmanClient<'a> {
     want_response: RwLock<bool>,
     pub game: Mutex<Option<HangmanGame>>,
     pub user: Mutex<Option<User>>,
-    pub event_queue: Mutex<Queue<HangmanEvent>>
+    pub event_queue: Mutex<VecDeque<HangmanEvent>>
 }
 
 impl<'a> HangmanClient<'a> {
@@ -27,7 +27,7 @@ impl<'a> HangmanClient<'a> {
             server,
             user: Mutex::new(None),
             game: Mutex::new(None),
-            event_queue: Mutex::new(Queue::new()),
+            event_queue: Mutex::new(VecDeque::new()),
             event_recv: Mutex::new(event_recv),
             want_response: RwLock::new(false), // Rudimentary thread communication,
         };
@@ -123,7 +123,6 @@ impl<'a> HangmanClient<'a> {
     }
 
     pub fn recv_event(&self, thread_send: mpsc::Sender<HangmanEventResponse>) -> Result<(), std::io::Error>{
-        // Add received events to locked queue
 
         let mut response_buffer = [0u8; 65507]; // Largest vec :(
         let (size, _) = self.socket.recv_from(&mut response_buffer)?;
@@ -150,6 +149,14 @@ impl<'a> HangmanClient<'a> {
             } // return Ok(()) // Basically 'continue'
         };
 
+        // Add received events to locked queue
+        self.event_queue.lock().unwrap().push_back(event);
+
+
+        Ok(())
+    }
+
+    pub fn handle_event(&self, event: HangmanEvent) {
         match event {
             HangmanEvent::Sync(_, guess) => {
                 let mut game_mut = self.game.lock().unwrap();
@@ -159,9 +166,6 @@ impl<'a> HangmanClient<'a> {
             },
             _ => {}
         }
-
-        Ok(())
-
     }
 
     fn send_response_to_main(&self, thread_send: mpsc::Sender<HangmanEventResponse>, response_buffer: &[u8]) {
