@@ -185,7 +185,7 @@ impl<'a> Scene<'a> for GameScene<'a> {
     }
 
 
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) { // TODO consider moving flash_red to draw somehow
 
         match event {
 

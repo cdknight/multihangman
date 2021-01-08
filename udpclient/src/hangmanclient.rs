@@ -86,19 +86,24 @@ impl<'a> HangmanClient<'a> {
     }
 
 
-    pub fn join_game(&self, id: u64) -> Result<(), std::io::Error>{
+    pub fn join_game(&self, id: u64) -> Result<(), std::io::Error> {
         let join_game_response = self.send_event(HangmanEvent::JoinGame(id))?;
 
         match join_game_response {
             HangmanEventResponse::GameJoined(game) => {
                 let mut game_mut = self.game.lock().unwrap();
                 *game_mut = Some(game);
+
+                return std::result::Result::Ok(())
             },
-            HangmanEventResponse::Err => panic!("Failed to join game!"),
-            _ => {}
+            HangmanEventResponse::Err => {
+                let error = std::io::Error::new(std::io::ErrorKind::Other, "Failed to create game!");
+                return std::result::Result::Err(error)
+            },
+            _ => std::result::Result::Ok(())
         }
 
-        Ok(())
+        // Ok(())
     }
 
 

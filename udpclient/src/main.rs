@@ -15,6 +15,7 @@ use std::rc::Rc;
 use std::env;
 use std::collections::HashMap;
 use std::cell::RefCell;
+use udpclient::joingame::JoinGameScene;
 
 use sfml::{graphics::*, window::*};
 
@@ -44,6 +45,7 @@ fn main() -> std::io::Result<()> {
         let mut scenes: HashMap<Scenes, RefCell<Box<Scene>>> = HashMap::new();
 
         scenes.insert(Scenes::OpeningScene, RefCell::new(Box::new(OpeningScene::new(Arc::clone(&client), &font))));
+        scenes.insert(Scenes::JoinGameScene, RefCell::new(Box::new(JoinGameScene::new(Arc::clone(&client), &font))));
         scenes.insert(Scenes::NewGameWizardScene, RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client), &font))));
         scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client), &font))));
 

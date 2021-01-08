@@ -7,6 +7,7 @@ pub mod newgamewizard;
 pub mod game;
 pub mod hangmanclient;
 pub mod opening;
+pub mod joingame;
 
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
