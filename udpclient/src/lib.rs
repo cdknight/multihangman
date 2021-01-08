@@ -6,8 +6,8 @@ use std::rc::Rc;
 pub mod newgamewizard;
 pub mod game;
 pub mod hangmanclient;
+pub mod opening;
 
-// #[derive(Debug)]
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow);
@@ -24,26 +24,8 @@ impl<'a> dyn Scene<'a> {
 
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum Scenes {
-    NewGameWizardScene, GameScene, None
+    JoinGameScene, OpeningScene, NewGameWizardScene, GameScene, None
 }
 
-/*pub struct DummyScene;
-
-impl<'a> Scene<'a> for DummyScene {
-    fn draw(&mut self, window: &mut RenderWindow) {
-
-    }
-
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
-
-    }
-
-    fn next_scene(&self) -> bool {
-        true
-    }
-    fn make_next_scene(&self, client: Arc<hangmanclient::HangmanClient<'static>>, font: &'static Font) -> Box<Scene<'static>> {
-        Box::new(crate::newgamewizard::NewGameWizardScene::new(client, font))
-    }
-}*/

@@ -9,6 +9,7 @@ use udpclient::game::GameScene;
 use udpclient::Scene;
 use udpclient::Scenes;
 use udpclient::hangmanclient::HangmanClient;
+use udpclient::opening::OpeningScene;
 use std::sync::Arc;
 use std::rc::Rc;
 use std::env;
@@ -42,13 +43,14 @@ fn main() -> std::io::Result<()> {
     let scenes: HashMap<Scenes, RefCell<Box<Scene>>> = {
         let mut scenes: HashMap<Scenes, RefCell<Box<Scene>>> = HashMap::new();
 
+        scenes.insert(Scenes::OpeningScene, RefCell::new(Box::new(OpeningScene::new(Arc::clone(&client), &font))));
         scenes.insert(Scenes::NewGameWizardScene, RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client), &font))));
         scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client), &font))));
 
         scenes
     };
 
-    let mut current_scene = Scenes::NewGameWizardScene; // TODO change this to the Scenes enum
+    let mut current_scene = Scenes::OpeningScene; // TODO change this to the Scenes enum
 
     /*if let Some(join_id) = env::args().nth(1) {
         let game_id: u64 = join_id.parse().expect("A valid game id is required!");
@@ -58,7 +60,7 @@ fn main() -> std::io::Result<()> {
 
     'mainloop: loop {
         {
-            let mut scene = scenes.get(&current_scene).unwrap().borrow_mut();
+            let mut scene = scenes.get(&current_scene).expect("Couldn't find requested scene").borrow_mut();
 
             while let Some(ev) = window.poll_event() {
                 match ev {
