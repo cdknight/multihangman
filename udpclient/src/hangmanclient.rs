@@ -47,6 +47,17 @@ impl<'a> HangmanClient<'a> {
         Some(Arc::clone(&client_ref))
     }
 
+    pub fn disconnect(&self) {
+        let disconnect = HangmanEvent::Disconnect;
+        let response = self.send_event(disconnect).unwrap();
+
+        match response {
+            HangmanEventResponse::Ok => {},
+            HangmanEventResponse::Err => panic!("Failed to disconnect!"),
+            _ => panic!("Failed to disconnect!")
+        }
+    }
+
     pub fn sync(&self, guess_str: String) -> HangmanEventResponse {
         let user = self.user.lock().unwrap().clone().unwrap();
         let mut game = self.game.lock().unwrap();

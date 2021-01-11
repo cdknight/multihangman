@@ -67,7 +67,10 @@ fn main() -> std::io::Result<()> {
             while let Some(ev) = window.poll_event() {
                 match ev {
                     Event::Closed |
-                    Event::KeyPressed { code: Key::Escape, .. }  => break 'mainloop,
+                    Event::KeyPressed { code: Key::Escape, .. }  => {
+                        client.disconnect();
+                        break 'mainloop
+                    },
                     _ => {}
 
                 }

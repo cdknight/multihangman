@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use std::net::SocketAddr;
 use std::cmp::PartialEq;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct HangmanGame {
     pub word: String,
     pub guesses: Vec<Guess>,
@@ -23,7 +23,7 @@ impl HangmanGame {
 }
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum GameMode {
     MultiGuess, FastestGuess
 }
@@ -43,7 +43,7 @@ impl PartialEq for Guess {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct User {
     pub ip: SocketAddr // Temporary, till I set up a DB
 }

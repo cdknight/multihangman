@@ -57,12 +57,31 @@ impl HangmanServer {
             HangmanEvent::Sync(id, guess) => {
                 server.respond_to_sync_event(&user, id, guess)
             },
+            HangmanEvent::Disconnect => {
+                server.respond_to_disconnect_event(&user)
+            }
             _ => {Ok(())}
         }
 
 
     }
 
+    pub fn respond_to_disconnect_event(&self, user: &User) -> Result<(), std::io::Error> {
+        // Remove user from players in the game
+
+        let mut games = self.games.lock().unwrap();
+
+        for game in games.iter_mut() {
+            let player_pos_opt = game.players.iter().position(|i| i == user);
+            if let Some(player_pos) = player_pos_opt {
+                game.players.remove(player_pos);
+            }
+
+        }
+
+        self.respond_to_event(&user, HangmanEventResponse::Ok)
+
+    }
 
     pub fn respond_to_sync_event(&self, user: &User, id: u64, guess: Guess) -> Result<(), std::io::Error> {
         // Add guess to game
