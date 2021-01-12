@@ -18,7 +18,7 @@ pub struct JoinGameScene<'a> { // TODO make this list all the current games
     game_id: u64,
     text_input: Text<'a>,
     text_input_box: RectangleShape<'a>,
-    give_next_scene: bool,
+    next_scene: Scenes,
     client: Arc<HangmanClient<'a>>,
     error_text: Text<'a>, // Todo create a class for wrapping a rectangle around a text, which owns both the text and the box
     error_text_box: RectangleShape<'a>,
@@ -53,7 +53,7 @@ impl<'a> JoinGameScene<'a> {
             title_text,
             text_input,
             text_input_box,
-            give_next_scene: false,
+            next_scene: Scenes::None,
             game_id: 0,
             client,
             error_text,
@@ -71,12 +71,13 @@ impl<'a> JoinGameScene<'a> {
 
 impl<'a> Scene<'a> for JoinGameScene<'a> {
 
-    fn next_scene(&self) -> Scenes  {
-        if self.give_next_scene {
-            return Scenes::GameScene;
-        }
+    fn reset_next_scene(&mut self) {
+        self.next_scene = Scenes::None;
+        self.game_id = 0;
+    }
 
-        Scenes::None
+    fn next_scene(&self) -> Scenes  {
+        self.next_scene.clone()
     }
 
     fn draw(&mut self, window: &mut RenderWindow) {
@@ -120,7 +121,7 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
             },
             Event::KeyPressed { code: Key::Return, .. } => {
                 match self.client.join_game(self.game_id) {
-                    Ok(ok) => self.give_next_scene = true,
+                    Ok(ok) => self.next_scene = Scenes::GameScene,
                     Err(error) => {
                         window.draw(&self.error_text_box);
                         window.draw(&self.error_text);
@@ -134,6 +135,9 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
 
                 };
 
+            },
+            Event::KeyPressed { code: Key::B, .. } => { // TODO Make this part of main.rs's handlers with a previous_scene trait method?
+                self.next_scene = Scenes::OpeningScene;
             }
             _ => {}
 

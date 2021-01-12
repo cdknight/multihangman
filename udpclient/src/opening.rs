@@ -51,6 +51,10 @@ impl<'a> OpeningScene<'a> {
 }
 
 impl<'a> Scene<'a> for OpeningScene<'a> {
+    fn reset_next_scene(&mut self) {
+        self.give_next_scene = false;
+    }
+
     fn next_scene(&self) -> Scenes {
         if self.give_next_scene {
             return self.next_scene.clone() // Haha

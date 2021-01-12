@@ -96,6 +96,7 @@ impl HangmanServer {
             }
             else {
                 // Broadcast sync to all players of game EXCEPT the one that sent the sync event
+
                 for player in &game.players { // TODO fix naming scheme
                     if player.ip != guess.user.ip { // EXCEPT part
                         self.send_event(player, HangmanEvent::Sync(id, guess.clone()))?;
@@ -110,9 +111,36 @@ impl HangmanServer {
 
                 game.guesses.push(guess);
 
-                // Check if guess is correct
+                // Check if game has been won/lost
 
+                let mut attempts: i32 = game.max_guesses.into();
+                let mut char_matches = 0;
 
+                for guess in &game.guesses {
+                    let matches = game.word.matches(&guess.guess).count();
+                    if matches > 0 {
+                        char_matches += matches;
+                    }
+                    else {
+                        attempts -= 1;
+                    }
+                }
+
+                if char_matches as usize == game.word.len() { // Win
+                    println!("Sending players WIN");
+                    for player in &game.players {
+                        let user_clone = user.clone(); // Why does this work haha
+                        self.send_event(player, HangmanEvent::GameWon(user_clone))?;
+                    }
+                    games.remove(id as usize);
+                }
+                else if attempts == 0 { // Draw
+                    println!("Sending players DRAW");
+                    for player in &game.players {
+                        self.send_event(player, HangmanEvent::GameDraw)?;
+                    }
+                    games.remove(id as usize);
+                }
 
             }
         }
@@ -121,10 +149,9 @@ impl HangmanServer {
         };
 
 
-
-
         Ok(())
     }
+
 
     pub fn respond_to_joingame_event(&self, user: &User, id: u64) -> Result<(), std::io::Error> {
         let mut games = self.games.lock().unwrap(); // Rather not lock it (we're only reading from it), but whatever.

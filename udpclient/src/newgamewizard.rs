@@ -27,6 +27,7 @@ pub struct NewGameWizardScene<'a> {
     pub mode: GameMode,
 
     next_scene: bool,
+    font: &'a Font,
     // next_scene: Option<Box<Scene<'a>>>,
 
 
@@ -79,6 +80,7 @@ impl<'a> NewGameWizardScene<'a> {
             rejected_guesses: Text::new("", font, 24),
             rejected_guesses_box: RectangleShape::new(),
             next_scene: false,
+            font
 
 
         }
@@ -90,6 +92,12 @@ impl<'a> NewGameWizardScene<'a> {
 }
 
 impl<'a> Scene<'a> for NewGameWizardScene<'a> {
+
+    fn reset_next_scene(&mut self) {
+        let font = self.font.clone();
+        let client = Arc::clone(&self.client);
+        *self = NewGameWizardScene::new(client, font);
+    }
 
     fn next_scene(&self) -> Scenes {
         if self.next_scene {

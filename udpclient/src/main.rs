@@ -61,36 +61,36 @@ fn main() -> std::io::Result<()> {
     }*/
 
     'mainloop: loop {
-        {
-            let mut scene = scenes.get(&current_scene).expect("Couldn't find requested scene").borrow_mut();
+        let mut scene = scenes.get(&current_scene).expect("Couldn't find requested scene").borrow_mut();
 
-            while let Some(ev) = window.poll_event() {
-                match ev {
-                    Event::Closed |
-                    Event::KeyPressed { code: Key::Escape, .. }  => {
-                        client.disconnect();
-                        break 'mainloop
-                    },
-                    _ => {}
+        while let Some(ev) = window.poll_event() {
+            match ev {
+                Event::Closed |
+                Event::KeyPressed { code: Key::Escape, .. }  => {
+                    client.disconnect();
+                    break 'mainloop
+                },
+                _ => {}
 
-                }
-
-                scene.handle_event(ev, &mut window);
             }
 
-            scene.draw(&mut window);
+            scene.handle_event(ev, &mut window);
         }
 
-
-        let scene = scenes.get(&current_scene).unwrap().borrow();
         let next_scene = scene.next_scene();
 
         match next_scene {
-            Scenes::None => {},
+            Scenes::None => {
+                scene.draw(&mut window); // No next scene, keep drawing
+            },
             _ => { // Any other kind of Scene, which means that the scene has indicated it'd like to switch.
-                current_scene = next_scene
+                scene.reset_next_scene(); // Stop each scene "flickering" between scenes if we return to a previously-finished scene
+                current_scene = next_scene;
             }
         }
+
+
+
 
         //println!("{:#?}", scene);
     }

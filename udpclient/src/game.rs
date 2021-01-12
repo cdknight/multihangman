@@ -8,6 +8,7 @@ use std::thread;
 use std::time::Duration;
 use unicode_categories::UnicodeCategories;
 use crate::newgamewizard::NewGameWizardScene;
+use crate::opening::OpeningScene;
 use crate::Scenes;
 
 pub struct GameScene<'a> {
@@ -16,9 +17,10 @@ pub struct GameScene<'a> {
     attempts_banner: Text<'a>,
     guess_boxes: Vec<RectangleShape<'a>>,
     guess_chars: Vec<Text<'a>>,
-
+    wrong_guess_box: RectangleShape<'a>,
+    wrong_guesses: Text<'a>,
     client: Arc<HangmanClient<'a>>,
-    pub next_scene: bool,
+    next_scene: Scenes,
     font: &'a Font,
     bgcolor: Color,
 }
@@ -35,16 +37,26 @@ impl<'a> GameScene<'a> {
         attempts_word_box.set_outline_color(Color::BLACK);
         attempts_word_box.set_outline_thickness(4.);
 
+        let mut wrong_guesses = Text::new("Guesses:", font, 24);
+        wrong_guesses.set_fill_color(Color::BLACK);
+        wrong_guesses.set_position((550., 100.));
+
+        let mut wrong_guess_box = RectangleShape::new();
+        wrong_guess_box.set_outline_color(Color::BLACK);
+        wrong_guess_box.set_outline_thickness(4.);
 
         GameScene {
             client,
             attempts_banner,
             attempts_word_box,
-            next_scene: false,
+            next_scene: Scenes::None,
             guess_boxes: vec![],
             guess_chars: vec![],
             font,
             bgcolor: Color::WHITE,
+            wrong_guesses,
+            wrong_guess_box
+
 
         }
 
@@ -86,14 +98,16 @@ impl<'a> GameScene<'a> {
             // Implement filling the guess_chars with the respective guesses  { may put this in a separate function for multiguess/fastestguess }
 
             let mut attempts_remaining = game.max_guesses;
+            let mut wrong_vec = vec![];
+
             for guess in &game.guesses {
 
                 // Go through the guesses, find the string's position in the other string, if part of string, then get the respective guess_chars set string to guess, and rerender the word box
-
                 let guess_indices: Vec<_> = game.word.match_indices(&guess.guess).collect();
                 if guess_indices.is_empty() {
                     // Guess was wrong
                     attempts_remaining -= 1;
+                    wrong_vec.push(&guess.guess);
                 }
 
                 for (guess_position, _) in guess_indices {
@@ -106,6 +120,20 @@ impl<'a> GameScene<'a> {
 
             self.attempts_banner.set_string(format!("Attempts: {}", attempts_remaining).as_str());
             Scene::update_word_box(&mut self.attempts_word_box, &self.attempts_banner);
+
+            let mut wrong_string = String::from("Wrong Guesses:\n");
+            let mut rows_left = 7; // 8 letters per line
+            for guess in wrong_vec {
+                wrong_string += format!("{} ", guess).as_str();
+                if rows_left == 0 {
+                    wrong_string += "\n";
+                    rows_left = 7;
+                }
+                rows_left -=1 ;
+
+            }
+            self.wrong_guesses.set_string(wrong_string.as_str());
+            Scene::update_word_box(&mut self.wrong_guess_box, &self.wrong_guesses);
         } // So that the game is unlocked
 
         // Process client event queue (eg. if another person guesses incorrectly, flash the window red)
@@ -123,45 +151,71 @@ impl<'a> GameScene<'a> {
         }
 
         for event in local_event_queue {
-            self.handle_hangman_event(&event, window); // Don't consume
+            self.handle_hangman_event(&event, window, false); // Don't consume
             self.client.handle_event(event); // Consume
         }
 
-
     }
 
-    fn flash_red(&mut self, window: &mut RenderWindow) {
+    fn flash_red(&mut self, window: &mut RenderWindow, from_self: bool) {
         self.bgcolor = Color::RED;
         self.draw(window);
 
-        thread::sleep(Duration::from_secs(1));
+        if from_self {
+            thread::sleep(Duration::from_secs(1)); // From us, penalize
+        }
+        else {
+            println!("Not penalizing you");
+            thread::sleep(Duration::from_millis(100)) // From someone else, don't wait so long/penalize them.
+        }
+
         self.bgcolor = Color::WHITE;
     }
 
-    fn handle_hangman_event(&mut self, event: &HangmanEvent, window: &mut RenderWindow) {
+    fn handle_hangman_event(&mut self, event: &HangmanEvent, window: &mut RenderWindow, from_self: bool) {
         let mut wrong_guess = false;
         { // Have to use a scope since game gets borrowed here, so when we call flash_red the program doesn't know whether or not we're modifying game or something. Could be called by making bgcolor a RefCell.
             let game = self.client.game.lock().unwrap();
             let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
 
-            if let HangmanEvent::Sync(id, guess) = event { // Flash screen red if the guess was wrong
-                if let None = game.word.find(&guess.guess) { // Repeated code is not good. (from udpserver.rs)
-                    wrong_guess = true;
-                }
+            match event {
+                HangmanEvent::Sync(id, guess) => {
+                    if let None = game.word.find(&guess.guess) { // Repeated code is not good. (from udpserver.rs)
+                        wrong_guess = true;
+
+                        // Update wrong guesses (TODO this should not be here, but rather in the update values method)
+
+                    }
+                },
+                HangmanEvent::GameWon(user) => {
+                    println!("{:?} won the game!", user);
+                    self.next_scene = Scenes::OpeningScene;
+                },
+                HangmanEvent::GameDraw => {
+                    println!("Draw game!");
+                    self.next_scene = Scenes::OpeningScene;
+                },
+                _ => {}
             }
+
         }
 
         if wrong_guess {
-            self.flash_red(window);
+            self.flash_red(window, from_self); // Don't wait, this was someone else's failure
         }
     }
 }
 
 impl<'a> Scene<'a> for GameScene<'a> {
 
+    fn reset_next_scene(&mut self) {
+        let font = self.font.clone();
+        let client = Arc::clone(&self.client);
+        *self = GameScene::new(client, font);
+    }
 
     fn next_scene(&self) -> Scenes {
-        Scenes::None
+        self.next_scene.clone()
     }
 
     fn draw(&mut self, window: &mut RenderWindow) {
@@ -172,6 +226,9 @@ impl<'a> Scene<'a> for GameScene<'a> {
 
         window.draw(&self.attempts_word_box);
         window.draw(&self.attempts_banner);
+
+        window.draw(&self.wrong_guess_box);
+        window.draw(&self.wrong_guesses);
 
         for guess_box in &self.guess_boxes {
             window.draw(guess_box)
@@ -190,14 +247,10 @@ impl<'a> Scene<'a> for GameScene<'a> {
         match event {
 
             Event::TextEntered { unicode, .. } => if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
-
-
                 println!("Guess! {:?}", unicode.to_string());
-                let sync_response = self.client.sync(unicode.to_string());
-                if let HangmanEventResponse::BadGuess = sync_response { // Flash screen red if the guess was wrong
-                    self.flash_red(window);
-                }
-
+                let (sync, sync_response) = self.client.sync(unicode.to_string());
+               
+                self.handle_hangman_event(&sync, window, true);
             },
             _ => {}
         }

@@ -58,7 +58,7 @@ impl<'a> HangmanClient<'a> {
         }
     }
 
-    pub fn sync(&self, guess_str: String) -> HangmanEventResponse {
+    pub fn sync(&self, guess_str: String) -> (HangmanEvent, HangmanEventResponse) {
         let user = self.user.lock().unwrap().clone().unwrap();
         let mut game = self.game.lock().unwrap();
         let mut game = game.as_mut().unwrap();
@@ -75,7 +75,7 @@ impl<'a> HangmanClient<'a> {
             _ => {}
         }
 
-        return sync_response;
+        return (sync, sync_response);
 
 
     }
@@ -157,6 +157,7 @@ impl<'a> HangmanClient<'a> {
 
         let event: HangmanEvent = match bincode::deserialize(&response_buffer) {
             bincode::Result::Ok(event) => {
+                println!("Recv e: {:?}", event);
                 event
             },
             bincode::Result::Err(error) => {
@@ -181,6 +182,12 @@ impl<'a> HangmanClient<'a> {
 
                 game_mut.guesses.push(guess);
             },
+            HangmanEvent::GameWon(_) | HangmanEvent::GameDraw => {
+
+                let mut game = self.game.lock().unwrap();
+                *game = None;
+
+            }
             _ => {}
         }
     }

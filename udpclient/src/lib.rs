@@ -13,6 +13,7 @@ pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow);
     fn next_scene(&self) -> Scenes;
+    fn reset_next_scene(&mut self);
 }
 
 impl<'a> dyn Scene<'a> {
@@ -25,7 +26,7 @@ impl<'a> dyn Scene<'a> {
 
 }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub enum Scenes {
     JoinGameScene, OpeningScene, NewGameWizardScene, GameScene, None
 }
