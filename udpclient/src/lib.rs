@@ -8,6 +8,7 @@ pub mod game;
 pub mod hangmanclient;
 pub mod opening;
 pub mod joingame;
+pub mod textbox;
 
 pub trait Scene<'a> {
     fn draw(&mut self, window: &mut RenderWindow);

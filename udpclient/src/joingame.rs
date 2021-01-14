@@ -12,6 +12,7 @@ use std::time::Duration;
 use unicode_categories::UnicodeCategories;
 use crate::newgamewizard::NewGameWizardScene;
 use crate::Scenes;
+use crate::textbox::TextBox;
 
 pub struct JoinGameScene<'a> { // TODO make this list all the current games
     title_text: Text<'a>,
@@ -20,8 +21,7 @@ pub struct JoinGameScene<'a> { // TODO make this list all the current games
     text_input_box: RectangleShape<'a>,
     next_scene: Scenes,
     client: Arc<HangmanClient<'a>>,
-    error_text: Text<'a>, // Todo create a class for wrapping a rectangle around a text, which owns both the text and the box
-    error_text_box: RectangleShape<'a>,
+    error_text_box: TextBox<'a>,
 }
 
 impl<'a> JoinGameScene<'a> {
@@ -39,15 +39,8 @@ impl<'a> JoinGameScene<'a> {
         text_input_box.set_outline_color(Color::BLACK);
         text_input_box.set_outline_thickness(4.);
 
-        let mut error_text = Text::new("That game does not exist.", font, 24);
-        error_text.set_fill_color(Color::RED);
-        error_text.set_position((400., 40.));
-
-        let mut error_text_box = RectangleShape::new();
-        error_text_box.set_outline_color(Color::RED);
-        error_text_box.set_outline_thickness(4.);
-        Scene::update_word_box(&mut error_text_box, &error_text);
-
+        let mut error_text_box = TextBox::new("That game does not exist.", font, 24, (400., 40.));
+        error_text_box.set_color(Color::RED);
 
         JoinGameScene {
             title_text,
@@ -56,7 +49,6 @@ impl<'a> JoinGameScene<'a> {
             next_scene: Scenes::None,
             game_id: 0,
             client,
-            error_text,
             error_text_box
 
         }
@@ -87,6 +79,7 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
 
         window.draw(&self.title_text);
         window.draw(&self.text_input_box);
+
         window.draw(&self.text_input);
 
         window.display();
@@ -124,8 +117,6 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
                     Ok(ok) => self.next_scene = Scenes::GameScene,
                     Err(error) => {
                         window.draw(&self.error_text_box);
-                        window.draw(&self.error_text);
-
                         window.display();
 
                         self.game_id = 0;
