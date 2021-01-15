@@ -7,20 +7,16 @@ use unicode_categories::UnicodeCategories;
 use std::sync::Arc;
 use std::rc::Rc;
 use crate::Scenes;
+use crate::textbox::TextBox;
 
 // #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
     // UI elements
     title_text: Text<'a>,
     guess_prompt: Text<'a>,
-    guess_word: Text<'a>,
-    word_box: RectangleShape<'a>,
+    guess_word_box: TextBox<'a>,
     vertices: Box<[Vertex]>,
     client: Arc<HangmanClient<'a>>,
-
-    rejected_guesses_box: RectangleShape<'a>,
-    rejected_guesses: Text<'a>, // \t and \n?
-
 
     pub guess_str: String,
     pub max_guesses: u16,
@@ -50,17 +46,12 @@ impl<'a> NewGameWizardScene<'a> {
         text.set_fill_color(Color::BLACK);
         text.set_position((50., 40.));
 
-        let mut guess_word = Text::new(&guess_str, font, 24);
-        guess_word.set_fill_color(Color::BLACK);
-        guess_word.set_position((100., 200.));
+        let mut guess_word_box = TextBox::new(&guess_str, font, 24, (100., 200.));
+        guess_word_box.text_box.borrow_mut().set_outline_color(Color::rgb(145, 122, 255));
 
         let mut guess_prompt = Text::new("What's the word you'd like to guess?\n\n\nPress ENTER to continue", font, 24);
         guess_prompt.set_fill_color(Color::BLACK);
         guess_prompt.set_position((100., 150.));
-
-        let mut word_box = RectangleShape::new();
-        word_box.set_outline_color(Color::rgb(145, 122, 255));
-        word_box.set_outline_thickness(4.);
 
         let vertices = NewGameWizardScene::select_triangle(57., 9.);
 
@@ -68,8 +59,7 @@ impl<'a> NewGameWizardScene<'a> {
         NewGameWizardScene {
             title_text: text,
             guess_prompt,
-            word_box,
-            guess_word,
+            guess_word_box,
 
             guess_str,
             max_guesses: 0,
@@ -77,8 +67,6 @@ impl<'a> NewGameWizardScene<'a> {
             wizard: WizardStatus::Word,
             vertices: vertices,
             client,
-            rejected_guesses: Text::new("", font, 24),
-            rejected_guesses_box: RectangleShape::new(),
             next_scene: false,
             font
 
@@ -112,8 +100,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
         window.draw(&self.title_text);
         match self.wizard {
             WizardStatus::Word | WizardStatus::MaxGuesses => {
-                window.draw(&self.word_box);
-                window.draw(&self.guess_word);
+                window.draw(&self.guess_word_box);
             },
             WizardStatus::Mode => {
                 window.draw_primitives(&self.vertices, PrimitiveType::Quads, RenderStates::default());
@@ -135,9 +122,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                         else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
                             self.guess_str.push(unicode);
                         }
-                        self.guess_word.set_string(&self.guess_str);
-
-                        Scene::update_word_box(&mut self.word_box, &self.guess_word);
+                        self.guess_word_box.text.set_string(&self.guess_str);
                     },
                     WizardStatus::MaxGuesses => {
                         if unicode == 0x08 as char { // Backspace
@@ -162,9 +147,8 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                             self.max_guesses = maxguess_str.parse().unwrap_or(self.max_guesses);
                         }
 
-                        self.guess_word.set_string(self.max_guesses.to_string().as_str());
+                        self.guess_word_box.text.set_string(self.max_guesses.to_string().as_str());
 
-                        Scene::update_word_box(&mut self.word_box, &self.guess_word);
                     },
                     WizardStatus::Mode => {
                         if unicode == 'a' {

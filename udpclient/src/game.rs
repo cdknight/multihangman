@@ -10,15 +10,13 @@ use unicode_categories::UnicodeCategories;
 use crate::newgamewizard::NewGameWizardScene;
 use crate::opening::OpeningScene;
 use crate::Scenes;
+use crate::textbox::TextBox;
 
 pub struct GameScene<'a> {
     // UI elements
-    attempts_word_box: RectangleShape<'a>,
-    attempts_banner: Text<'a>,
-    guess_boxes: Vec<RectangleShape<'a>>,
-    guess_chars: Vec<Text<'a>>,
-    wrong_guess_box: RectangleShape<'a>,
-    wrong_guesses: Text<'a>,
+    attempts_word_box: TextBox<'a>,
+    guess_chars: Vec<TextBox<'a>>,
+    wrong_guess_box: TextBox<'a>,
     client: Arc<HangmanClient<'a>>,
     next_scene: Scenes,
     font: &'a Font,
@@ -29,32 +27,16 @@ impl<'a> GameScene<'a> {
 
     pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> GameScene<'a> {
 
-        let mut attempts_banner = Text::new("Attempts: ", font, 24);
-        attempts_banner.set_fill_color(Color::BLACK);
-        attempts_banner.set_position((550., 40.));
-
-        let mut attempts_word_box = RectangleShape::new();
-        attempts_word_box.set_outline_color(Color::BLACK);
-        attempts_word_box.set_outline_thickness(4.);
-
-        let mut wrong_guesses = Text::new("Guesses:", font, 24);
-        wrong_guesses.set_fill_color(Color::BLACK);
-        wrong_guesses.set_position((550., 100.));
-
-        let mut wrong_guess_box = RectangleShape::new();
-        wrong_guess_box.set_outline_color(Color::BLACK);
-        wrong_guess_box.set_outline_thickness(4.);
+        let mut attempts_word_box = TextBox::new("Attempts: ", font, 24, (550., 40.));
+        let mut wrong_guess_box = TextBox::new("Guesses:", font, 24, (550., 100.));
 
         GameScene {
             client,
-            attempts_banner,
             attempts_word_box,
             next_scene: Scenes::None,
-            guess_boxes: vec![],
             guess_chars: vec![],
             font,
             bgcolor: Color::WHITE,
-            wrong_guesses,
             wrong_guess_box
 
 
@@ -69,29 +51,17 @@ impl<'a> GameScene<'a> {
             let game = self.client.game.lock().unwrap();
             let game = game.as_ref().expect("Game doesn't exist yet in the game scene!");
 
-
-
             // Render guesses → they'll always be updated. (ONLY multiguess [guess together] is implemented for now)
 
             if self.guess_chars.len() != game.word.len() { // ONLY create all the guess chars if the two things are mismatched. Otherwise we'll just keep adding to the boxes and create a memory leak.
                 self.guess_chars.clear();
-                self.guess_boxes.clear();
 
                 let mut xoffset = 100.;
                 for i in 0..game.word.len() {
-                    let mut guess_letter = Text::new(" ", self.font, 40);
-                    guess_letter.set_fill_color(Color::BLACK);
-                    guess_letter.set_position((xoffset, 280.));
-                    xoffset+=50.;
-
-                    let mut guess_box = RectangleShape::new();
-
-                    guess_box.set_outline_color(Color::BLACK);
-                    guess_box.set_outline_thickness(4.);
-                    Scene::update_word_box(&mut guess_box, &guess_letter); // Autoset position based on letter, so we just have to set letter positioning.
-
+                    let mut guess_letter = TextBox::new(" ", self.font, 40, (xoffset, 280.));
                     self.guess_chars.push(guess_letter);
-                    self.guess_boxes.push(guess_box);
+
+                    xoffset+=50.;
                 }
             }
 
@@ -112,14 +82,12 @@ impl<'a> GameScene<'a> {
 
                 for (guess_position, _) in guess_indices {
                     let mut guess_char = &mut self.guess_chars[guess_position];
-                    guess_char.set_string(guess.guess.as_str());
+                    guess_char.text.set_string(guess.guess.as_str());
 
-                    Scene::update_word_box(&mut self.guess_boxes[guess_position], &guess_char);
                 }
             }
 
-            self.attempts_banner.set_string(format!("Attempts: {}", attempts_remaining).as_str());
-            Scene::update_word_box(&mut self.attempts_word_box, &self.attempts_banner);
+            self.attempts_word_box.text.set_string(format!("Attempts: {}", attempts_remaining).as_str());
 
             let mut wrong_string = String::from("Wrong Guesses:\n");
             let mut rows_left = 7; // 8 letters per line
@@ -132,8 +100,7 @@ impl<'a> GameScene<'a> {
                 rows_left -=1 ;
 
             }
-            self.wrong_guesses.set_string(wrong_string.as_str());
-            Scene::update_word_box(&mut self.wrong_guess_box, &self.wrong_guesses);
+            self.wrong_guess_box.text.set_string(wrong_string.as_str());
         } // So that the game is unlocked
 
         // Process client event queue (eg. if another person guesses incorrectly, flash the window red)
@@ -225,14 +192,7 @@ impl<'a> Scene<'a> for GameScene<'a> {
         // window.draw(&self.attempts_remaining);
 
         window.draw(&self.attempts_word_box);
-        window.draw(&self.attempts_banner);
-
         window.draw(&self.wrong_guess_box);
-        window.draw(&self.wrong_guesses);
-
-        for guess_box in &self.guess_boxes {
-            window.draw(guess_box)
-        }
 
         for guess_char in &self.guess_chars {
             window.draw(guess_char)

@@ -17,8 +17,7 @@ use crate::textbox::TextBox;
 pub struct JoinGameScene<'a> { // TODO make this list all the current games
     title_text: Text<'a>,
     game_id: u64,
-    text_input: Text<'a>,
-    text_input_box: RectangleShape<'a>,
+    text_input_box: TextBox<'a>,
     next_scene: Scenes,
     client: Arc<HangmanClient<'a>>,
     error_text_box: TextBox<'a>,
@@ -31,20 +30,13 @@ impl<'a> JoinGameScene<'a> {
         title_text.set_fill_color(Color::BLACK);
         title_text.set_position((40., 40.));
 
-        let mut text_input = Text::new("1", font, 24);
-        text_input.set_fill_color(Color::BLACK);
-        text_input.set_position((400., 240.));
-
-        let mut text_input_box = RectangleShape::new();
-        text_input_box.set_outline_color(Color::BLACK);
-        text_input_box.set_outline_thickness(4.);
+        let mut text_input_box = TextBox::new("1", font, 24, (400., 240.));
 
         let mut error_text_box = TextBox::new("That game does not exist.", font, 24, (400., 40.));
         error_text_box.set_color(Color::RED);
 
         JoinGameScene {
             title_text,
-            text_input,
             text_input_box,
             next_scene: Scenes::None,
             game_id: 0,
@@ -56,8 +48,7 @@ impl<'a> JoinGameScene<'a> {
     }
 
     fn update_values(&mut self) {
-        self.text_input.set_string(self.game_id.to_string().as_str());
-        Scene::update_word_box(&mut self.text_input_box, &self.text_input);
+        self.text_input_box.text.set_string(self.game_id.to_string().as_str());
     }
 }
 
@@ -79,8 +70,6 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
 
         window.draw(&self.title_text);
         window.draw(&self.text_input_box);
-
-        window.draw(&self.text_input);
 
         window.display();
 
