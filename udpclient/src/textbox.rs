@@ -1,6 +1,7 @@
 use sfml::{graphics::*, window::*};
 use std::cell::RefCell;
 use unicode_categories::UnicodeCategories;
+use crate::resources::Resources;
 
 pub struct TextBox<'a> {
     pub text: Text<'a>,
@@ -8,8 +9,10 @@ pub struct TextBox<'a> {
 }
 
 impl<'a> TextBox<'a> {
-    pub fn new(text: &str, font: &'a Font, size: u32, position: (f32, f32)) -> TextBox<'a> {
-        let mut text = Text::new(text, font, size);
+    pub fn new(text_str: &str, size: u32, position: (f32, f32)) -> TextBox<'a> {
+        let mut text = Text::default();
+        text.set_string(text_str);
+        text.set_character_size(size);
         text.set_position(position);
         text.set_fill_color(Color::BLACK);
 
@@ -21,6 +24,13 @@ impl<'a> TextBox<'a> {
             text,
             text_box: RefCell::new(text_box),
         }
+    }
+
+    pub fn disable_box(&self) {
+        // Hide the box TODO just deallocate/use an option for this
+
+        self.text_box.borrow_mut().set_outline_color(Color::rgba(0, 0, 0, 255));
+        self.text_box.borrow_mut().set_outline_thickness(0.); // Defaults
     }
 
     fn update_word_box(&self) {
@@ -73,6 +83,18 @@ impl<'a> TextBox<'a> {
         self.text.set_string(&text_str);
 
         text_str
+    }
+
+    pub fn draw_w(&mut self, window: &mut RenderWindow, resources: &Resources) {
+        self.update_word_box();
+
+        // Set text font
+
+        /*let mut draw_text = self.text.clone();*/
+        /*draw_text.set_font(&resources.font);*/
+
+        window.draw(&*self.text_box.borrow());
+        window.draw(&self.text);
     }
 }
 

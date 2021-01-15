@@ -1,6 +1,7 @@
 use sfml::{graphics::*, window::*};
 use std::sync::Arc;
 use std::rc::Rc;
+use crate::resources::Resources;
 
 
 pub mod newgamewizard;
@@ -9,10 +10,11 @@ pub mod hangmanclient;
 pub mod opening;
 pub mod joingame;
 pub mod textbox;
+pub mod resources;
 
 pub trait Scene<'a> {
-    fn draw(&mut self, window: &mut RenderWindow);
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow);
+    fn draw(&mut self, window: &mut RenderWindow, resources: &Resources);
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources);
     fn next_scene(&self) -> Scenes;
     fn reset_next_scene(&mut self);
 }

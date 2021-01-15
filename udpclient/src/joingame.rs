@@ -13,9 +13,10 @@ use unicode_categories::UnicodeCategories;
 use crate::newgamewizard::NewGameWizardScene;
 use crate::Scenes;
 use crate::textbox::TextBox;
+use crate::resources::Resources;
 
 pub struct JoinGameScene<'a> { // TODO make this list all the current games
-    title_text: Text<'a>,
+    title_text: TextBox<'a>,
     game_id: u64,
     text_input_box: TextBox<'a>,
     next_scene: Scenes,
@@ -25,14 +26,13 @@ pub struct JoinGameScene<'a> { // TODO make this list all the current games
 
 impl<'a> JoinGameScene<'a> {
 
-    pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> JoinGameScene<'a> {
-        let mut title_text = Text::new("Join Game", font, 24);
-        title_text.set_fill_color(Color::BLACK);
-        title_text.set_position((40., 40.));
+    pub fn new(client: Arc<HangmanClient<'a>>) -> JoinGameScene<'a> {
+        let mut title_text = TextBox::new("Join Game", 24, (40., 40.));
+        title_text.disable_box();
 
-        let mut text_input_box = TextBox::new("1", font, 24, (400., 240.));
+        let mut text_input_box = TextBox::new("1", 24, (400., 240.));
 
-        let mut error_text_box = TextBox::new("That game does not exist.", font, 24, (400., 40.));
+        let mut error_text_box = TextBox::new("That game does not exist.", 24, (400., 40.));
         error_text_box.set_color(Color::RED);
 
         JoinGameScene {
@@ -63,7 +63,7 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
         self.next_scene.clone()
     }
 
-    fn draw(&mut self, window: &mut RenderWindow) {
+    fn draw(&mut self, window: &mut RenderWindow, resources: &Resources) {
         self.update_values();
 
         window.clear(Color::WHITE);
@@ -75,7 +75,7 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
 
     }
 
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources) {
         match event {
             Event::TextEntered { unicode, ..  } => {
                 self.game_id = self.text_input_box.input_num(unicode);

@@ -7,12 +7,13 @@ use std::sync::Arc;
 use std::rc::Rc;
 use crate::Scenes;
 use crate::textbox::TextBox;
+use crate::resources::Resources;
 
 // #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
     // UI elements
-    title_text: Text<'a>,
-    guess_prompt: Text<'a>,
+    title_text: TextBox<'a>,
+    guess_prompt: TextBox<'a>,
     guess_word_box: TextBox<'a>,
     vertices: Box<[Vertex]>,
     client: Arc<HangmanClient<'a>>,
@@ -22,7 +23,6 @@ pub struct NewGameWizardScene<'a> {
     pub mode: GameMode,
 
     next_scene: bool,
-    font: &'a Font,
     // next_scene: Option<Box<Scene<'a>>>,
 
 
@@ -38,19 +38,16 @@ impl<'a> NewGameWizardScene<'a> {
         ])
     }
 
-    pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> NewGameWizardScene<'a> {
+    pub fn new(client: Arc<HangmanClient<'a>>) -> NewGameWizardScene<'a> {
         let guess_str = String::from("");
 
-        let mut text = Text::new("MultiHangman", font, 24);
-        text.set_fill_color(Color::BLACK);
-        text.set_position((50., 40.));
+        let mut text = TextBox::new("MultiHangman", 24, (50., 40.));
+        text.disable_box();
 
-        let mut guess_word_box = TextBox::new(&guess_str, font, 24, (100., 200.));
+        let mut guess_word_box = TextBox::new(&guess_str, 24, (100., 200.));
         guess_word_box.text_box.borrow_mut().set_outline_color(Color::rgb(145, 122, 255));
 
-        let mut guess_prompt = Text::new("What's the word you'd like to guess?\n\n\nPress ENTER to continue", font, 24);
-        guess_prompt.set_fill_color(Color::BLACK);
-        guess_prompt.set_position((100., 150.));
+        let mut guess_prompt = TextBox::new("What's the word you'd like to guess?\n\n\nPress ENTER to continue", 24, (100., 150.));
 
         let vertices = NewGameWizardScene::select_triangle(57., 9.);
 
@@ -67,7 +64,6 @@ impl<'a> NewGameWizardScene<'a> {
             vertices: vertices,
             client,
             next_scene: false,
-            font
 
 
         }
@@ -81,9 +77,8 @@ impl<'a> NewGameWizardScene<'a> {
 impl<'a> Scene<'a> for NewGameWizardScene<'a> {
 
     fn reset_next_scene(&mut self) {
-        let font = self.font.clone();
         let client = Arc::clone(&self.client);
-        *self = NewGameWizardScene::new(client, font);
+        *self = NewGameWizardScene::new(client);
     }
 
     fn next_scene(&self) -> Scenes {
@@ -93,7 +88,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
         Scenes::None
     }
 
-    fn draw(&mut self, window: &mut RenderWindow) {
+    fn draw(&mut self, window: &mut RenderWindow, resources: &Resources) {
         // use window.draw to draw stuff
         window.clear(Color::WHITE);
         window.draw(&self.title_text);
@@ -110,7 +105,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
         window.display();
     }
        
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources) {
         match event {
             Event::TextEntered { unicode, .. } => {
                 match self.wizard {
@@ -138,12 +133,12 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                 match self.wizard {
                     WizardStatus::Word => {
                         self.wizard = WizardStatus::MaxGuesses;
-                        self.guess_prompt.set_string("What's the maximum number of guesses?\n\n\nPress ENTER to continue");
+                        self.guess_prompt.text.set_string("What's the maximum number of guesses?\n\n\nPress ENTER to continue");
                         // self.guess_word_box.text.set_string("1");
                     },
                     WizardStatus::MaxGuesses => {
                         self.wizard = WizardStatus::Mode;
-                        self.guess_prompt.set_string("What game mode would you like?\nA: Fastest Guess\nB: Guess Together\n\nPress ENTER to continue")
+                        self.guess_prompt.text.set_string("What game mode would you like?\nA: Fastest Guess\nB: Guess Together\n\nPress ENTER to continue")
                     },
                     WizardStatus::Mode => {
                         // self.new_game(self.guess_word, self.max_guesses, self.mode)

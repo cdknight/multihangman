@@ -11,6 +11,7 @@ use crate::newgamewizard::NewGameWizardScene;
 use crate::opening::OpeningScene;
 use crate::Scenes;
 use crate::textbox::TextBox;
+use crate::resources::Resources;
 
 pub struct GameScene<'a> {
     // UI elements
@@ -19,33 +20,29 @@ pub struct GameScene<'a> {
     wrong_guess_box: TextBox<'a>,
     client: Arc<HangmanClient<'a>>,
     next_scene: Scenes,
-    font: &'a Font,
     bgcolor: Color,
 }
 
 impl<'a> GameScene<'a> {
 
-    pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> GameScene<'a> {
+    pub fn new(client: Arc<HangmanClient<'a>>) -> GameScene<'a> {
 
-        let mut attempts_word_box = TextBox::new("Attempts: ", font, 24, (550., 40.));
-        let mut wrong_guess_box = TextBox::new("Guesses:", font, 24, (550., 100.));
+        let mut attempts_word_box = TextBox::new("Attempts: ", 24, (550., 40.));
+        let mut wrong_guess_box = TextBox::new("Guesses:", 24, (550., 100.));
 
         GameScene {
             client,
             attempts_word_box,
             next_scene: Scenes::None,
             guess_chars: vec![],
-            font,
             bgcolor: Color::WHITE,
             wrong_guess_box
-
-
         }
 
 
     }
 
-    fn update_values(&mut self, window: &mut RenderWindow) {
+    fn update_values(&mut self, window: &mut RenderWindow, resources: &Resources) {
         {
 
             let game = self.client.game.lock().unwrap();
@@ -58,7 +55,7 @@ impl<'a> GameScene<'a> {
 
                 let mut xoffset = 100.;
                 for i in 0..game.word.len() {
-                    let mut guess_letter = TextBox::new(" ", self.font, 40, (xoffset, 280.));
+                    let mut guess_letter = TextBox::new(" ", 40, (xoffset, 280.));
                     self.guess_chars.push(guess_letter);
 
                     xoffset+=50.;
@@ -118,15 +115,15 @@ impl<'a> GameScene<'a> {
         }
 
         for event in local_event_queue {
-            self.handle_hangman_event(&event, window, false); // Don't consume
+            self.handle_hangman_event(&event, window, resources, false); // Don't consume
             self.client.handle_event(event); // Consume
         }
 
     }
 
-    fn flash_red(&mut self, window: &mut RenderWindow, from_self: bool) {
+    fn flash_red(&mut self, window: &mut RenderWindow, resources: &Resources, from_self: bool) {
         self.bgcolor = Color::RED;
-        self.draw(window);
+        self.draw(window, resources);
 
         if from_self {
             thread::sleep(Duration::from_secs(1)); // From us, penalize
@@ -139,7 +136,7 @@ impl<'a> GameScene<'a> {
         self.bgcolor = Color::WHITE;
     }
 
-    fn handle_hangman_event(&mut self, event: &HangmanEvent, window: &mut RenderWindow, from_self: bool) {
+    fn handle_hangman_event(&mut self, event: &HangmanEvent, window: &mut RenderWindow, resources: &Resources, from_self: bool) {
         let mut wrong_guess = false;
         { // Have to use a scope since game gets borrowed here, so when we call flash_red the program doesn't know whether or not we're modifying game or something. Could be called by making bgcolor a RefCell.
             let game = self.client.game.lock().unwrap();
@@ -168,7 +165,7 @@ impl<'a> GameScene<'a> {
         }
 
         if wrong_guess {
-            self.flash_red(window, from_self); // Don't wait, this was someone else's failure
+            self.flash_red(window, resources, from_self); // Don't wait, this was someone else's failure
         }
     }
 }
@@ -176,17 +173,16 @@ impl<'a> GameScene<'a> {
 impl<'a> Scene<'a> for GameScene<'a> {
 
     fn reset_next_scene(&mut self) {
-        let font = self.font.clone();
         let client = Arc::clone(&self.client);
-        *self = GameScene::new(client, font);
+        *self = GameScene::new(client);
     }
 
     fn next_scene(&self) -> Scenes {
         self.next_scene.clone()
     }
 
-    fn draw(&mut self, window: &mut RenderWindow) {
-        self.update_values(window);
+    fn draw(&mut self, window: &mut RenderWindow, resources: &Resources) {
+        self.update_values(window, resources);
 
         window.clear(self.bgcolor);
         // window.draw(&self.attempts_remaining);
@@ -202,7 +198,7 @@ impl<'a> Scene<'a> for GameScene<'a> {
     }
 
 
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) { // TODO consider moving flash_red to draw somehow
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources) { // TODO consider moving flash_red to draw somehow
 
         match event {
 
@@ -210,7 +206,7 @@ impl<'a> Scene<'a> for GameScene<'a> {
                 println!("Guess! {:?}", unicode.to_string());
                 let (sync, sync_response) = self.client.sync(unicode.to_string());
                
-                self.handle_hangman_event(&sync, window, true);
+                self.handle_hangman_event(&sync, window, resources, true);
             },
             _ => {}
         }

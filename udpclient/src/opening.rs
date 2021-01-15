@@ -2,27 +2,26 @@ use crate::{Scenes, Scene};
 use sfml::{graphics::*, system::*, window::*};
 use std::sync::Arc;
 use crate::hangmanclient::HangmanClient;
+use crate::textbox::TextBox;
+use crate::resources::Resources;
 
 pub struct OpeningScene<'a> {
-    title_text: Text<'a>,
+    title_text: TextBox<'a>,
     selection_box: RectangleShape<'a>,
     options_box: RectangleShape<'a>,
     next_scene: Scenes,
     give_next_scene: bool,
-    scene_selection_text: Text<'a>,
+    scene_selection_text: TextBox<'a>,
     client: Arc<HangmanClient<'a>>,
-    font: &'a Font
 }
 
 impl<'a> OpeningScene<'a> {
-    pub fn new(client: Arc<HangmanClient<'a>>, font: &'a Font) -> OpeningScene<'a> {
-        let mut title_text = Text::new("MultiHangman", font, 24);
-        title_text.set_fill_color(Color::BLACK);
-        title_text.set_position((30., 30.));
+    pub fn new(client: Arc<HangmanClient<'a>>) -> OpeningScene<'a> {
+        let mut title_text = TextBox::new("MultiHangman", 24, (30., 30.));
+        title_text.disable_box();
 
-        let mut scene_selection_text = Text::new("New Game\n\nJoin Game", font, 24);
-        scene_selection_text.set_fill_color(Color::BLACK);
-        scene_selection_text.set_position((325., 160.));
+        let mut scene_selection_text = TextBox::new("New Game\n\nJoin Game", 24, (30., 30.));
+        scene_selection_text.disable_box();
 
         let mut selection_box = RectangleShape::new();
         selection_box.set_size((250., 50.));
@@ -41,7 +40,6 @@ impl<'a> OpeningScene<'a> {
             selection_box,
             options_box,
             scene_selection_text,
-            font,
             give_next_scene: false,
             client,
             next_scene: Scenes::NewGameWizardScene
@@ -62,20 +60,20 @@ impl<'a> Scene<'a> for OpeningScene<'a> {
         return Scenes::None
     }
 
-    fn draw(&mut self, window: &mut RenderWindow) {
+    fn draw(&mut self, window: &mut RenderWindow, resources: &Resources) {
         window.clear(Color::WHITE);
 
         window.draw(&self.options_box);
         window.draw(&self.selection_box);
 
-        window.draw(&self.scene_selection_text);
-        window.draw(&self.title_text);
+        self.scene_selection_text.draw_w(window, resources);
+        self.title_text.draw_w(window, resources);
 
         window.display();
 
     }
 
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
+    fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources) {
         match event {
             Event::KeyPressed { code: Key::Up, .. } => {
                 self.selection_box.set_position((275., 150.)); // May want to use word box function here and in the other handler

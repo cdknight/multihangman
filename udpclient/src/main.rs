@@ -16,6 +16,7 @@ use std::env;
 use std::collections::HashMap;
 use std::cell::RefCell;
 use udpclient::joingame::JoinGameScene;
+use udpclient::resources::Resources;
 
 use sfml::{graphics::*, window::*};
 
@@ -28,26 +29,20 @@ fn main() -> std::io::Result<()> {
     );
 
     // let font_send = Rc::clone(&font);
-    let font = {
-        let mut font_path = std::env::current_dir().unwrap();
-        font_path.push("Audiowide-Regular.ttf");
-        let font_path = font_path.as_path().to_str().unwrap();
-
-        Font::from_file(font_path).unwrap()
-    };
 
 
     let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
+    let resources = Resources::new();
 
     // Massively inefficient (:, but I don't know enough about lifetimes to create these Scenes only when they're necessary.
     // This is inefficient because it creates all the scenes at once instead of only creating them when they're necessary.
     let scenes: HashMap<Scenes, RefCell<Box<Scene>>> = {
         let mut scenes: HashMap<Scenes, RefCell<Box<Scene>>> = HashMap::new();
 
-        scenes.insert(Scenes::OpeningScene, RefCell::new(Box::new(OpeningScene::new(Arc::clone(&client), &font))));
-        scenes.insert(Scenes::JoinGameScene, RefCell::new(Box::new(JoinGameScene::new(Arc::clone(&client), &font))));
-        scenes.insert(Scenes::NewGameWizardScene, RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client), &font))));
-        scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client), &font))));
+        scenes.insert(Scenes::OpeningScene, RefCell::new(Box::new(OpeningScene::new(Arc::clone(&client)))));
+        scenes.insert(Scenes::JoinGameScene, RefCell::new(Box::new(JoinGameScene::new(Arc::clone(&client)))));
+        scenes.insert(Scenes::NewGameWizardScene, RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client)))));
+        scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client)))));
 
         scenes
     };
@@ -74,14 +69,14 @@ fn main() -> std::io::Result<()> {
 
             }
 
-            scene.handle_event(ev, &mut window);
+            scene.handle_event(ev, &mut window, &resources);
         }
 
         let next_scene = scene.next_scene();
 
         match next_scene {
             Scenes::None => {
-                scene.draw(&mut window); // No next scene, keep drawing
+                scene.draw(&mut window, &resources); // No next scene, keep drawing
             },
             _ => { // Any other kind of Scene, which means that the scene has indicated it'd like to switch.
                 scene.reset_next_scene(); // Stop each scene "flickering" between scenes if we return to a previously-finished scene
