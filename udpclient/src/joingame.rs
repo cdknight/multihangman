@@ -78,28 +78,7 @@ impl<'a> Scene<'a> for JoinGameScene<'a> {
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow) {
         match event {
             Event::TextEntered { unicode, ..  } => {
-                if unicode == 0x08 as char { // Backspace
-
-                    let mut gameid_str = self.game_id.to_string();
-                    gameid_str.pop();
-
-                    self.game_id = gameid_str.parse().unwrap_or_else(|_| {
-                        if gameid_str == "" { // Empty string means you and the string is empty, set it to zero as the default value
-                            return 0;
-                        }
-
-                        self.game_id
-                    });
-                }
-                else {
-                    // Add a check to make sure it's a digit
-
-                    let mut gameid_str = self.game_id.to_string();
-                    gameid_str.push(unicode);
-
-                    self.game_id = gameid_str.parse().unwrap_or(self.game_id);
-                }
-
+                self.game_id = self.text_input_box.input_num(unicode);
             },
             Event::KeyPressed { code: Key::Return, .. } => {
                 match self.client.join_game(self.game_id) {

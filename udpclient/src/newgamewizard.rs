@@ -3,7 +3,6 @@ use hangmanstructs::*;
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
 use crate::game::GameScene;
-use unicode_categories::UnicodeCategories;
 use std::sync::Arc;
 use std::rc::Rc;
 use crate::Scenes;
@@ -116,39 +115,10 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
             Event::TextEntered { unicode, .. } => {
                 match self.wizard {
                     WizardStatus::Word => {
-                        if unicode == 0x08 as char { // Backspace
-                            self.guess_str.pop();
-                        }
-                        else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
-                            self.guess_str.push(unicode);
-                        }
-                        self.guess_word_box.text.set_string(&self.guess_str);
+                        self.guess_str = self.guess_word_box.input_str(unicode);
                     },
                     WizardStatus::MaxGuesses => {
-                        if unicode == 0x08 as char { // Backspace
-
-                            let mut maxguess_str = self.max_guesses.to_string();
-                            maxguess_str.pop();
-
-                            self.max_guesses = maxguess_str.parse().unwrap_or_else(|_| {
-                                if maxguess_str == "" { // Empty string means you and the string is empty, set it to zero as the default value
-                                    return 0;
-                                }
-
-                                self.max_guesses
-                            });
-                        }
-                        else {
-                            // Add a check to make sure it's a digit
-
-                            let mut maxguess_str = self.max_guesses.to_string();
-                            maxguess_str.push(unicode);
-
-                            self.max_guesses = maxguess_str.parse().unwrap_or(self.max_guesses);
-                        }
-
-                        self.guess_word_box.text.set_string(self.max_guesses.to_string().as_str());
-
+                        self.max_guesses = self.guess_word_box.input_num(unicode) as u16;
                     },
                     WizardStatus::Mode => {
                         if unicode == 'a' {
@@ -169,7 +139,7 @@ impl<'a> Scene<'a> for NewGameWizardScene<'a> {
                     WizardStatus::Word => {
                         self.wizard = WizardStatus::MaxGuesses;
                         self.guess_prompt.set_string("What's the maximum number of guesses?\n\n\nPress ENTER to continue");
-                        // self.guess_word.set_string("");
+                        // self.guess_word_box.text.set_string("1");
                     },
                     WizardStatus::MaxGuesses => {
                         self.wizard = WizardStatus::Mode;
