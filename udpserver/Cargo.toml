@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 hangmanstructs = { path = "../hangmanstructs" }
 bincode = "1.3.1"
+diesel = "1.4.5"

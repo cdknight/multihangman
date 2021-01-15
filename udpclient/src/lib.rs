@@ -2,6 +2,8 @@ use sfml::{graphics::*, window::*};
 use std::sync::Arc;
 use std::rc::Rc;
 use crate::resources::Resources;
+use crate::hangmanclient::HangmanClient;
+use raylib::prelude::*;
 
 
 pub mod newgamewizard;
@@ -26,7 +28,13 @@ impl<'a> dyn Scene<'a> {
         rect.set_size((text_bound_box.width+20., text_bound_box.height+20.));
         rect.set_position((text_bound_box.left-10., text_bound_box.top-10.));
     }
+}
 
+pub trait RaylibScene<'a> {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread);
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle);
+    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>>;
+    fn has_next_scene(&self) -> bool;
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]

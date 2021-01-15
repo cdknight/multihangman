@@ -4,8 +4,11 @@ use hangmanstructs::*;
 use std::thread; // ow
 use std::collections::VecDeque;
 use crate::Scene;
+use crate::opening::OpeningScene;
+use crate::RaylibScene;
 use crate::hangmanclient::HangmanClient;
 use sfml::{graphics::*, window::*};
+use sfml::graphics::Color;
 use unicode_segmentation::UnicodeSegmentation;
 use hangmanstructs::*;
 use std::time::Duration;
@@ -14,6 +17,7 @@ use crate::newgamewizard::NewGameWizardScene;
 use crate::Scenes;
 use crate::textbox::TextBox;
 use crate::resources::Resources;
+use raylib::prelude::*;
 
 pub struct JoinGameScene<'a> { // TODO make this list all the current games
     title_text: TextBox<'a>,
@@ -49,6 +53,23 @@ impl<'a> JoinGameScene<'a> {
 
     fn update_values(&mut self) {
         self.text_input_box.text.set_string(self.game_id.to_string().as_str());
+    }
+
+}
+
+impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        let mut d = rl.begin_drawing(thread);
+        d.clear_background(raylib::core::color::Color::WHITE);
+        d.draw_text("Join Game", 30, 30, 24, raylib::core::color::Color::BLACK); // Title text
+
+        // Literally do nothing
+    }
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {}
+    fn has_next_scene(&self) -> bool {false}
+
+    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
+        Box::new(OpeningScene::new(client))
     }
 }
 

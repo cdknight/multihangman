@@ -17,35 +17,36 @@ use std::collections::HashMap;
 use std::cell::RefCell;
 use udpclient::joingame::JoinGameScene;
 use udpclient::resources::Resources;
+use udpclient::RaylibScene;
 
 use sfml::{graphics::*, window::*};
+use raylib::prelude::*;
 
 fn main() -> std::io::Result<()> {
-    let mut window = RenderWindow::new(
-        (800, 600),
-        "MultiHangman",
-        Style::CLOSE,
-        &Default::default(),
-    );
+    let (mut rl, thread) = raylib::init()
+        .size(800, 600)
+        .title("MultiHangman")
+        .build();
 
     // let font_send = Rc::clone(&font);
-
 
     let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
     let resources = Resources::new();
 
     // Massively inefficient (:, but I don't know enough about lifetimes to create these Scenes only when they're necessary.
     // This is inefficient because it creates all the scenes at once instead of only creating them when they're necessary.
-    let scenes: HashMap<Scenes, RefCell<Box<Scene>>> = {
+
+    let mut scene: Box<RaylibScene> = Box::new(OpeningScene::new(Arc::clone(&client)));
+    /*let scenes: HashMap<Scenes, RefCell<Box<Scene>>> = {
         let mut scenes: HashMap<Scenes, RefCell<Box<Scene>>> = HashMap::new();
 
-        scenes.insert(Scenes::OpeningScene, RefCell::new(Box::new(OpeningScene::new(Arc::clone(&client)))));
-        scenes.insert(Scenes::JoinGameScene, RefCell::new(Box::new(JoinGameScene::new(Arc::clone(&client)))));
+        // scenes.insert(Scenes::OpeningScene, RefCell::new(Box::new()));
+        /*scenes.insert(Scenes::JoinGameScene, RefCell::new(Box::new(JoinGameScene::new(Arc::clone(&client)))));
         scenes.insert(Scenes::NewGameWizardScene, RefCell::new(Box::new(NewGameWizardScene::new(Arc::clone(&client)))));
-        scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client)))));
+        scenes.insert(Scenes::GameScene, RefCell::new(Box::new(GameScene::new(Arc::clone(&client)))));*/
 
         scenes
-    };
+    };*/
 
     let mut current_scene = Scenes::OpeningScene; // TODO change this to the Scenes enum
 
@@ -55,34 +56,41 @@ fn main() -> std::io::Result<()> {
         sceneindex += 1;
     }*/
 
-    'mainloop: loop {
-        let mut scene = scenes.get(&current_scene).expect("Couldn't find requested scene").borrow_mut();
+    while !rl.window_should_close() {
 
-        while let Some(ev) = window.poll_event() {
+        // let mut scene = scenes.get(&current_scene).expect("Couldn't find requested scene").borrow_mut();
+
+        scene.handle_raylib(&mut rl);
+        /*while let Some(ev) = window.poll_event() {
             match ev {
                 Event::Closed |
                 Event::KeyPressed { code: Key::Escape, .. }  => {
                     client.disconnect();
-                    break 'mainloop
+                    // Something something EXIT here
                 },
                 _ => {}
 
             }
 
             scene.handle_event(ev, &mut window, &resources);
+        }*/
+
+        // let next_scene = scene.next_scene();
+
+        scene.draw_raylib(&mut rl, &thread); // No next scene, keep drawing
+        if scene.has_next_scene() {
+            scene = scene.next_scene(Arc::clone(&client));
         }
 
-        let next_scene = scene.next_scene();
-
-        match next_scene {
+        /*match next_scene {
             Scenes::None => {
-                scene.draw(&mut window, &resources); // No next scene, keep drawing
+                // Draw
             },
             _ => { // Any other kind of Scene, which means that the scene has indicated it'd like to switch.
                 scene.reset_next_scene(); // Stop each scene "flickering" between scenes if we return to a previously-finished scene
                 current_scene = next_scene;
             }
-        }
+        }*/
 
 
 

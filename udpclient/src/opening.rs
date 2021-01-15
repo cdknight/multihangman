@@ -1,9 +1,12 @@
-use crate::{Scenes, Scene};
+use crate::{Scenes, Scene, RaylibScene};
 use sfml::{graphics::*, system::*, window::*};
+use sfml::graphics::Color;
 use std::sync::Arc;
 use crate::hangmanclient::HangmanClient;
 use crate::textbox::TextBox;
 use crate::resources::Resources;
+use crate::joingame::JoinGameScene;
+use raylib::prelude::*;
 
 pub struct OpeningScene<'a> {
     title_text: TextBox<'a>,
@@ -46,8 +49,50 @@ impl<'a> OpeningScene<'a> {
 
         }
     }
+
 }
 
+impl<'a> RaylibScene<'a> for OpeningScene<'a> {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        let mut d = rl.begin_drawing(thread);
+        d.clear_background(raylib::core::color::Color::WHITE);
+
+        d.draw_text("MultiHangman", 30, 30, 24, raylib::core::color::Color::BLACK); // Title text
+        d.draw_text("New Game\n\nJoin Game", 340, 165, 24, raylib::core::color::Color::BLACK);
+        match self.next_scene { // Selection box
+            Scenes::NewGameWizardScene => d.draw_rectangle_lines(275, 150, 250, 50, raylib::core::color::Color::BLACK),
+            Scenes::JoinGameScene => d.draw_rectangle_lines(275, 225, 250, 50, raylib::core::color::Color::BLACK),
+            _ => {},
+        };
+        d.draw_rectangle_lines(250, 100, 300, 200, raylib::core::color::Color::BLACK); // Options box
+    }
+
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
+        if let Some(key) = rl.get_key_pressed() {
+            match key {
+                KeyboardKey::KEY_UP => {
+                    self.next_scene = Scenes::NewGameWizardScene;
+                },
+                KeyboardKey::KEY_DOWN => {
+                    self.next_scene = Scenes::JoinGameScene;
+                },
+                KeyboardKey::KEY_ENTER => {
+                    self.give_next_scene = true;
+                },
+                _ => {}
+            }
+        }
+    }
+
+
+    fn has_next_scene(&self) -> bool {
+        self.give_next_scene
+    }
+
+    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
+        Box::new(JoinGameScene::new(client))
+    }
+}
 impl<'a> Scene<'a> for OpeningScene<'a> {
     fn reset_next_scene(&mut self) {
         self.give_next_scene = false;
@@ -76,15 +121,10 @@ impl<'a> Scene<'a> for OpeningScene<'a> {
     fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources) {
         match event {
             Event::KeyPressed { code: Key::Up, .. } => {
-                self.selection_box.set_position((275., 150.)); // May want to use word box function here and in the other handler
-                self.next_scene = Scenes::NewGameWizardScene;
             },
             Event::KeyPressed { code: Key::Down, .. } => {
-                self.selection_box.set_position((275., 215.));
-                self.next_scene = Scenes::JoinGameScene;
             },
             Event::KeyPressed { code: Key::Return, .. } => {
-                self.give_next_scene = true;
             }
             _ => {}
         }
