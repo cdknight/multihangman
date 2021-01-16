@@ -1,6 +1,6 @@
 # MultiHangman
 
-![Screenshot](screenshot.png)
+![Screenshot](sc.png)
 
 (**Yes, the UI will be improved.**)
 
