@@ -46,10 +46,21 @@ impl<'a> TextBox<'a> {
     }
 
     pub fn input_num(&mut self, unicode: char) -> u64 {
-        let mut num_str = self.text.string().to_rust_string();
         let mut num_int: u64 = 0; // We need this to parse properly (to the right type)
 
-        if unicode == 0x08 as char { // Backspace
+        let num_int = Self::process_input_num(self.text.string().to_rust_string().parse().unwrap(), unicode);
+
+        self.text.set_string(num_int.to_string().as_str());
+
+        // Return the new value
+        num_int
+    }
+
+    pub fn process_input_num(old: u64, unicode: char) -> u64 {
+        let mut num_str = old.to_string();
+        let mut num_int: u64 = 0; // We need this to parse properly (to the right type)
+
+        if unicode == 0x03 as char { // Backspace
 
             num_str.pop();
             num_int = num_str.parse().unwrap_or_else(|_| {
@@ -66,21 +77,27 @@ impl<'a> TextBox<'a> {
             num_int = num_str.parse().unwrap_or(0);
         }
 
-        self.text.set_string(num_int.to_string().as_str());
-
         // Return the new value
         num_int
     }
 
     pub fn input_str(&mut self, unicode: char) -> String {
-        let mut text_str = self.text.string().to_rust_string();
+        let text_str = self.text.string().to_rust_string();
+        let text_str = Self::process_input_str(text_str, unicode);
+
+        self.text.set_string(&text_str);
+
+        text_str
+    }
+
+    pub fn process_input_str(mut text_str: String, unicode: char) -> String {
+
         if unicode == 0x08 as char { // Backspace
             text_str.pop();
         }
         else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
             text_str.push(unicode);
         }
-        self.text.set_string(&text_str);
 
         text_str
     }

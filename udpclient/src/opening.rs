@@ -6,6 +6,7 @@ use crate::hangmanclient::HangmanClient;
 use crate::textbox::TextBox;
 use crate::resources::Resources;
 use crate::joingame::JoinGameScene;
+use crate::newgamewizard::NewGameWizardScene;
 use raylib::prelude::*;
 
 pub struct OpeningScene<'a> {
@@ -67,7 +68,7 @@ impl<'a> RaylibScene<'a> for OpeningScene<'a> {
         d.draw_rectangle_lines(250, 100, 300, 200, raylib::core::color::Color::BLACK); // Options box
     }
 
-    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
         if let Some(key) = rl.get_key_pressed() {
             match key {
                 KeyboardKey::KEY_UP => {
@@ -90,7 +91,10 @@ impl<'a> RaylibScene<'a> for OpeningScene<'a> {
     }
 
     fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
-        Box::new(JoinGameScene::new(client))
+        match self.next_scene {
+            Scenes::NewGameWizardScene => Box::new(NewGameWizardScene::new(client)),
+            _ => Box::new(JoinGameScene::new(client))
+        }
     }
 }
 impl<'a> Scene<'a> for OpeningScene<'a> {

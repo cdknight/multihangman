@@ -1,4 +1,5 @@
 use sfml::{graphics::*, window::*, system::*};
+use sfml::graphics::Color;
 use hangmanstructs::*;
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
@@ -8,6 +9,10 @@ use std::rc::Rc;
 use crate::Scenes;
 use crate::textbox::TextBox;
 use crate::resources::Resources;
+use crate::RaylibScene;
+use raylib::prelude::*;
+
+use crate::opening::OpeningScene;
 
 // #[derive(Debug)]
 pub struct NewGameWizardScene<'a> {
@@ -72,6 +77,26 @@ impl<'a> NewGameWizardScene<'a> {
 
 
 
+}
+
+impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
+
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        let mut d = rl.begin_drawing(thread);
+        d.clear_background(raylib::core::color::Color::WHITE);
+        d.draw_text("New Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
+        d.draw_text("What's the word you'd like to guess?\n\n\nPress ENTER to continue", 100, 150, 24, raylib::core::color::Color::BLACK);
+
+    }
+
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    }
+
+    fn has_next_scene(&self) -> bool {false}
+
+    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
+        Box::new(OpeningScene::new(client))
+    }
 }
 
 impl<'a> Scene<'a> for NewGameWizardScene<'a> {

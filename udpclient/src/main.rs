@@ -60,7 +60,7 @@ fn main() -> std::io::Result<()> {
 
         // let mut scene = scenes.get(&current_scene).expect("Couldn't find requested scene").borrow_mut();
 
-        scene.handle_raylib(&mut rl);
+        scene.handle_raylib(&mut rl, &thread);
         /*while let Some(ev) = window.poll_event() {
             match ev {
                 Event::Closed |
@@ -79,6 +79,7 @@ fn main() -> std::io::Result<()> {
 
         scene.draw_raylib(&mut rl, &thread); // No next scene, keep drawing
         if scene.has_next_scene() {
+
             scene = scene.next_scene(Arc::clone(&client));
         }
 
