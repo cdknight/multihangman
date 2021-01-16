@@ -15,6 +15,7 @@ use crate::newgamewizard::NewGameWizardScene;
 use crate::Scenes;
 use crate::textbox::TextBox;
 use raylib::prelude::*;
+use crate::resources::Resources;
 
 pub struct JoinGameScene<'a> { // TODO make this list all the current games
     game_id: u64,
@@ -37,15 +38,15 @@ impl<'a> JoinGameScene<'a> {
 }
 
 impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
-    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         {
             let mut d = rl.begin_drawing(thread);
             d.clear_background(raylib::core::color::Color::WHITE);
-            d.draw_text("Join Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
-            RaylibScene::draw_text_box(&mut d, &self.game_id.to_string(), 400, 240, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box
+            RaylibScene::draw_text_res(&mut d, &res, "Join Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
+            RaylibScene::draw_input_box(&mut d, &res, &self.game_id.to_string(), 400, 240, 24); // Input box
 
             if self.show_error {
-                RaylibScene::draw_text_box(&mut d, "That game does not exist.", 400, 40, 24, raylib::core::color::Color::RED, raylib::core::color::Color::RED); // Input box
+                RaylibScene::draw_text_box(&mut d, &res, "That game does not exist.", 400, 40, 24, Color::RED, Color::RED); // error box
             }
         } // End drawing
 
@@ -55,7 +56,7 @@ impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
         }
     }
 
-    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
 
         if let Some(key) = rl.get_key_pressed() {
             match key {

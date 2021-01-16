@@ -4,6 +4,7 @@ use crate::hangmanclient::HangmanClient;
 use crate::textbox::TextBox;
 use crate::joingame::JoinGameScene;
 use crate::newgamewizard::NewGameWizardScene;
+use crate::resources::Resources;
 use raylib::prelude::*;
 
 pub struct OpeningScene<'a> {
@@ -24,21 +25,21 @@ impl<'a> OpeningScene<'a> {
 }
 
 impl<'a> RaylibScene<'a> for OpeningScene<'a> {
-    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         let mut d = rl.begin_drawing(thread);
         d.clear_background(raylib::core::color::Color::WHITE);
 
-        d.draw_text("MultiHangman", 30, 30, 24, raylib::core::color::Color::BLACK); // Title text
-        d.draw_text("New Game\n\nJoin Game", 340, 165, 24, raylib::core::color::Color::BLACK);
+        RaylibScene::draw_text_res(&mut d, &res, "MultiHangman", 30, 30, 24, raylib::core::color::Color::BLACK); // Title text
+        RaylibScene::draw_text_res(&mut d, &res, "New Game\n\nJoin Game", 340, 165, 24, raylib::core::color::Color::BLACK);
         match self.next_scene { // Selection box
-            Scenes::NewGameWizardScene => d.draw_rectangle_lines(275, 150, 250, 50, raylib::core::color::Color::BLACK),
-            Scenes::JoinGameScene => d.draw_rectangle_lines(275, 225, 250, 50, raylib::core::color::Color::BLACK),
+            Scenes::NewGameWizardScene => RaylibScene::draw_rectangle_lines_width(&mut d, 275, 150, 250, 50, 3, Color::BLACK),
+            Scenes::JoinGameScene => RaylibScene::draw_rectangle_lines_width(&mut d, 275, 225, 250, 50, 3, Color::BLACK),
             _ => {},
         };
-        d.draw_rectangle_lines(250, 100, 300, 200, raylib::core::color::Color::BLACK); // Options box
+        RaylibScene::draw_rectangle_lines_width(&mut d, 250, 100, 300, 200, 4, Color::BLACK); // Options box
     }
 
-    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
         if let Some(key) = rl.get_key_pressed() {
             match key {
                 KeyboardKey::KEY_UP => {

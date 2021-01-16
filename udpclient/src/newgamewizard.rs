@@ -8,7 +8,7 @@ use crate::textbox::TextBox;
 use crate::RaylibScene;
 use raylib::prelude::*;
 use unicode_categories::UnicodeCategories;
-
+use crate::resources::Resources;
 use crate::opening::OpeningScene;
 
 // #[derive(Debug)]
@@ -53,22 +53,22 @@ impl<'a> NewGameWizardScene<'a> {
 
 impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
 
-    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         let mut d = rl.begin_drawing(thread);
         d.clear_background(raylib::core::color::Color::WHITE);
-        d.draw_text("New Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
-        d.draw_text(&self.instructions, 100, 150, 24, raylib::core::color::Color::BLACK); // prompt
+        RaylibScene::draw_text_res(&mut d, &res, "New Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
+        RaylibScene::draw_text_res(&mut d, &res, &self.instructions, 100, 150, 24, raylib::core::color::Color::BLACK); // prompt
 
         match self.wizard {
             WizardStatus::Word | WizardStatus::MaxGuesses => {
-                RaylibScene::draw_text_box(&mut d, &self.prompt_str, 100, 200, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
+                RaylibScene::draw_input_box(&mut d, &res, &self.prompt_str, 100, 200, 24); // Input box. Mode doesn't need it.
             },
             _ => {}
         };
 
     }
 
-    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
 
         if let Some(key) = rl.get_key_pressed() {
             let unicode = key as i32 as u8 as char;

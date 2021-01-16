@@ -10,6 +10,7 @@ use crate::opening::OpeningScene;
 use crate::Scenes;
 use crate::RaylibScene;
 use crate::textbox::TextBox;
+use crate::resources::Resources;
 use raylib::prelude::*;
 
 pub struct GameScene<'a> {
@@ -154,7 +155,7 @@ impl<'a> GameScene<'a> {
 
 impl<'a> RaylibScene<'a> for GameScene<'a> {
 
-    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         {
             let mut d = rl.begin_drawing(thread);
             self.update_values(&d);
@@ -165,23 +166,23 @@ impl<'a> RaylibScene<'a> for GameScene<'a> {
                 d.clear_background(raylib::core::color::Color::WHITE);
             }
 
-            d.draw_text("Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
+            RaylibScene::draw_text_res(&mut d, &res, "Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
 
             let mut xoffset = 100;
             for gc in &self.guess_chars {
-                RaylibScene::draw_text_box(&mut d, &gc, xoffset, 280, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
+                RaylibScene::draw_text_box(&mut d, &res, &gc, xoffset, 280, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
                 xoffset += 50;
             }
 
-            RaylibScene::draw_text_box(&mut d, &self.attempts, 550, 40, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
-            RaylibScene::draw_text_box(&mut d, &self.wrong_guesses, 550, 100, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
+            RaylibScene::draw_text_box(&mut d, &res, &self.attempts, 550, 40, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
+            RaylibScene::draw_text_box(&mut d, &res, &self.wrong_guesses, 550, 100, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
         } // Stop drawing
         if let Some(ms) = self.wrong_guess_timeout { // Flash red pause
             thread::sleep(Duration::from_millis(ms)); // From someone else, don't wait so long/penalize them.
             self.wrong_guess_timeout = None;
         }
     }
-    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
 
         if let Some(key) = rl.get_key_pressed() {
             let unicode = key as i32 as u8 as char;
