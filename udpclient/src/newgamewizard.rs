@@ -27,6 +27,9 @@ pub struct NewGameWizardScene<'a> {
     pub max_guesses: u16,
     pub mode: GameMode,
 
+    prompt_str: String,
+    instructions: String,
+
     next_scene: bool,
     // next_scene: Option<Box<Scene<'a>>>,
 
@@ -53,6 +56,8 @@ impl<'a> NewGameWizardScene<'a> {
         guess_word_box.text_box.borrow_mut().set_outline_color(Color::rgb(145, 122, 255));
 
         let mut guess_prompt = TextBox::new("What's the word you'd like to guess?\n\n\nPress ENTER to continue", 24, (100., 150.));
+        let mut prompt_str = String::from("");
+        let mut instructions = String::from("What's the word you'd like to guess?\n\n\nPress ENTER to continue");
 
         let vertices = NewGameWizardScene::select_triangle(57., 9.);
 
@@ -69,6 +74,8 @@ impl<'a> NewGameWizardScene<'a> {
             vertices: vertices,
             client,
             next_scene: false,
+            prompt_str,
+            instructions
 
 
         }
@@ -85,17 +92,71 @@ impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
         let mut d = rl.begin_drawing(thread);
         d.clear_background(raylib::core::color::Color::WHITE);
         d.draw_text("New Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
-        d.draw_text("What's the word you'd like to guess?\n\n\nPress ENTER to continue", 100, 150, 24, raylib::core::color::Color::BLACK);
+        d.draw_text(&self.instructions, 100, 150, 24, raylib::core::color::Color::BLACK); // prompt
+
+        match self.wizard {
+            WizardStatus::Word | WizardStatus::MaxGuesses => {
+                RaylibScene::draw_text_box(&mut d, &self.prompt_str, 100, 200, 24, raylib::core::color::Color::BLACK, raylib::core::color::Color::BLACK); // Input box. Mode doesn't need it.
+            },
+            _ => {}
+        };
 
     }
 
     fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+
+        if let Some(key) = rl.get_key_pressed() {
+            let unicode = key as i32 as u8 as char;
+            match self.wizard {
+                WizardStatus::Word => {
+                    self.guess_str = TextBox::process_input_str(&mut self.guess_str, unicode);
+                    self.prompt_str = self.guess_str.to_string();
+
+                    if unicode == 0x01 as char { // Enter
+                        self.wizard = WizardStatus::MaxGuesses;
+                        self.instructions = "What's the maximum number of guesses?\n\n\nPress ENTER to continue".to_string();
+                        self.prompt_str = self.max_guesses.to_string();
+                    }
+                },
+                WizardStatus::MaxGuesses => {
+                    if unicode == 0x01 as char { // Enter
+                        self.wizard = WizardStatus::Mode;
+                        self.instructions = "What game mode would you like?\nA: Fastest Guess\nB: Guess Together\n\nPress ENTER to continue".to_string();
+                    }
+
+                    self.max_guesses = TextBox::process_input_num(self.max_guesses as u64, unicode) as u16;
+                    self.prompt_str = self.max_guesses.to_string();
+                },
+                WizardStatus::Mode => {
+
+                    let mut join_game = |mode| {
+                        let user = self.client.user.lock().unwrap().clone().unwrap();
+                        let game = HangmanGame::from(self.guess_str.clone(), self.max_guesses, user, mode);
+                        // TODO ^ make that not clone
+
+                        let game_id = self.client.create_game(game).unwrap();
+                        // Join game
+                        self.client.join_game(game_id);
+                        self.next_scene = true;
+                    };
+
+                    match key {
+                        KeyboardKey::KEY_A => join_game(GameMode::FastestGuess),
+                        KeyboardKey::KEY_B => join_game(GameMode::MultiGuess),
+                        _ => {}
+                    };
+
+                },
+            }
+
+        }
+
     }
 
-    fn has_next_scene(&self) -> bool {false}
+    fn has_next_scene(&self) -> bool {self.next_scene}
 
     fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
-        Box::new(OpeningScene::new(client))
+        Box::new(GameScene::new(client))
     }
 }
 

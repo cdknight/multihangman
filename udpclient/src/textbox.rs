@@ -82,24 +82,24 @@ impl<'a> TextBox<'a> {
     }
 
     pub fn input_str(&mut self, unicode: char) -> String {
-        let text_str = self.text.string().to_rust_string();
-        let text_str = Self::process_input_str(text_str, unicode);
+        let mut text_str = self.text.string().to_rust_string();
+        let text_str = Self::process_input_str(&mut text_str, unicode);
 
         self.text.set_string(&text_str);
 
         text_str
     }
 
-    pub fn process_input_str(mut text_str: String, unicode: char) -> String {
+    pub fn process_input_str(text_str: &mut String, unicode: char) -> String {
 
-        if unicode == 0x08 as char { // Backspace
+        if unicode == 0x03 as char { // Backspace
             text_str.pop();
         }
         else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
             text_str.push(unicode);
         }
 
-        text_str
+        text_str.to_string()
     }
 
     pub fn draw_w(&mut self, window: &mut RenderWindow, resources: &Resources) {

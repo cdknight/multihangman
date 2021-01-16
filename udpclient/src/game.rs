@@ -1,6 +1,7 @@
 use crate::Scene;
 use crate::hangmanclient::HangmanClient;
 use sfml::{graphics::*, window::*};
+use sfml::graphics::Color;
 use unicode_segmentation::UnicodeSegmentation;
 use std::sync::Arc;
 use hangmanstructs::*;
@@ -10,8 +11,10 @@ use unicode_categories::UnicodeCategories;
 use crate::newgamewizard::NewGameWizardScene;
 use crate::opening::OpeningScene;
 use crate::Scenes;
+use crate::RaylibScene;
 use crate::textbox::TextBox;
 use crate::resources::Resources;
+use raylib::prelude::*;
 
 pub struct GameScene<'a> {
     // UI elements
@@ -168,6 +171,33 @@ impl<'a> GameScene<'a> {
             self.flash_red(window, resources, from_self); // Don't wait, this was someone else's failure
         }
     }
+}
+
+impl<'a> RaylibScene<'a> for GameScene<'a> {
+
+    fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        let mut d = rl.begin_drawing(thread);
+        d.clear_background(raylib::core::color::Color::WHITE);
+        d.draw_text("Game", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
+    }
+    fn handle_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+
+        if let Some(key) = rl.get_key_pressed() {
+            let unicode = key as i32 as u8 as char;
+        }
+        /*match event {
+            Event::TextEntered { unicode, .. } => if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
+                println!("Guess! {:?}", unicode.to_string());
+                let (sync, sync_response) = self.client.sync(unicode.to_string());
+
+                self.handle_hangman_event(&sync, window, resources, true);
+            },
+            _ => {}
+        }*/
+
+    }
+    fn has_next_scene(&self) -> bool {self.next_scene != Scenes::None}
+    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {Box::new(GameScene::new(client))}
 }
 
 impl<'a> Scene<'a> for GameScene<'a> {
