@@ -1,7 +1,4 @@
-use crate::Scene;
 use crate::hangmanclient::HangmanClient;
-use sfml::{graphics::*, window::*};
-use sfml::graphics::Color;
 use unicode_segmentation::UnicodeSegmentation;
 use std::sync::Arc;
 use hangmanstructs::*;
@@ -13,17 +10,13 @@ use crate::opening::OpeningScene;
 use crate::Scenes;
 use crate::RaylibScene;
 use crate::textbox::TextBox;
-use crate::resources::Resources;
 use raylib::prelude::*;
 
 pub struct GameScene<'a> {
     // UI elements
-    attempts_word_box: TextBox<'a>,
     guess_chars: Vec<String>,
-    wrong_guess_box: TextBox<'a>,
     client: Arc<HangmanClient<'a>>,
     next_scene: Scenes,
-    bgcolor: Color,
     attempts: String,
     wrong_guesses: String,
     wrong_guess_timeout: Option<u64>
@@ -33,18 +26,13 @@ impl<'a> GameScene<'a> {
 
     pub fn new(client: Arc<HangmanClient<'a>>) -> GameScene<'a> {
 
-        let mut attempts_word_box = TextBox::new("Attempts: ", 24, (550., 40.));
         let mut attempts = String::from("Attempts: ");
         let mut wrong_guesses  = String::from("Wrong Guesses: ");
-        let mut wrong_guess_box = TextBox::new("Guesses:", 24, (550., 100.));
 
         GameScene {
             client,
-            attempts_word_box,
             next_scene: Scenes::None,
             guess_chars: vec![],
-            bgcolor: Color::WHITE,
-            wrong_guess_box,
             attempts,
             wrong_guesses,
             wrong_guess_timeout: None
@@ -131,21 +119,6 @@ impl<'a> GameScene<'a> {
 
     }
 
-    fn flash_red(&mut self, window: &mut RenderWindow, resources: &Resources, from_self: bool) {
-        self.bgcolor = Color::RED;
-        self.draw(window, resources);
-
-        if from_self {
-            thread::sleep(Duration::from_secs(1)); // From us, penalize
-        }
-        else {
-            println!("Not penalizing you");
-            thread::sleep(Duration::from_millis(100)) // From someone else, don't wait so long/penalize them.
-        }
-
-        self.bgcolor = Color::WHITE;
-    }
-
     fn handle_hangman_event(&mut self, event: &HangmanEvent, from_self: bool) {
         { // Have to use a scope since game gets borrowed here, so when we call flash_red the program doesn't know whether or not we're modifying game or something. Could be called by making bgcolor a RefCell.
             let game = self.client.game.lock().unwrap();
@@ -221,52 +194,9 @@ impl<'a> RaylibScene<'a> for GameScene<'a> {
         }
     }
     fn has_next_scene(&self) -> bool {self.next_scene != Scenes::None}
+
     fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
-        println!("Here");
         Box::new(OpeningScene::new(client))
     }
 }
 
-impl<'a> Scene<'a> for GameScene<'a> {
-
-    fn reset_next_scene(&mut self) {
-        let client = Arc::clone(&self.client);
-        *self = GameScene::new(client);
-    }
-
-    fn next_scene(&self) -> Scenes {
-        self.next_scene.clone()
-    }
-
-    fn draw(&mut self, window: &mut RenderWindow, resources: &Resources) {
-        // self.update_values(window, resources);
-
-        window.clear(self.bgcolor);
-        // window.draw(&self.attempts_remaining);
-
-        window.draw(&self.attempts_word_box);
-        window.draw(&self.wrong_guess_box);
-
-        /*for guess_char in &self.guess_chars {
-            window.draw(guess_char)
-        }*/
-
-        window.display();
-    }
-
-
-    fn handle_event(&mut self, event: Event, window: &mut RenderWindow, resources: &Resources) { // TODO consider moving flash_red to draw somehow
-
-        match event {
-
-            Event::TextEntered { unicode, .. } => if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
-                println!("Guess! {:?}", unicode.to_string());
-                let (sync, sync_response) = self.client.sync(unicode.to_string());
-               
-                // self.handle_hangman_event(&sync, window, resources, true);
-            },
-            _ => {}
-        }
-    }
-
-}
