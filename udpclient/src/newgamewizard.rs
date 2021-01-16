@@ -11,6 +11,7 @@ use crate::textbox::TextBox;
 use crate::resources::Resources;
 use crate::RaylibScene;
 use raylib::prelude::*;
+use unicode_categories::UnicodeCategories;
 
 use crate::opening::OpeningScene;
 
@@ -123,9 +124,11 @@ impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
                         self.wizard = WizardStatus::Mode;
                         self.instructions = "What game mode would you like?\nA: Fastest Guess\nB: Guess Together\n\nPress ENTER to continue".to_string();
                     }
+                    else {
+                        self.max_guesses = TextBox::process_input_num(self.max_guesses as u64, unicode) as u16;
+                        self.prompt_str = self.max_guesses.to_string();
+                    }
 
-                    self.max_guesses = TextBox::process_input_num(self.max_guesses as u64, unicode) as u16;
-                    self.prompt_str = self.max_guesses.to_string();
                 },
                 WizardStatus::Mode => {
 

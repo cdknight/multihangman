@@ -5,6 +5,7 @@ use std::thread; // ow
 use std::collections::VecDeque;
 use crate::Scene;
 use crate::opening::OpeningScene;
+use crate::game::GameScene;
 use crate::RaylibScene;
 use crate::hangmanclient::HangmanClient;
 use sfml::{graphics::*, window::*};
@@ -105,7 +106,7 @@ impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
 
     fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
         match self.next_scene {
-            Scenes::GameScene => Box::new(OpeningScene::new(client)),
+            Scenes::GameScene => Box::new(GameScene::new(client)),
             _ => Box::new(OpeningScene::new(client))
         }
     }
