@@ -28,7 +28,8 @@ Edit `udpserver/src/lib.rs`. See the code snippet and comment below.
 
 ## Client
 
-You'll need SFML to build this. Follow the instructions at the [rust-sfml wiki](https://github.com/jeremyletang/rust-sfml/wiki) to get SFML working on your build environment.
+You'll need `cmake` installed to build this. On Linux and OS X, you can install `cmake` from your package manager of choice. On Windows, you could install CMake from its [website](https://cmake.org/), or however else you want. Make sure to add `cmake` to your PATH variable if you install it from the website.
+
 You should just be able to run `cargo run` afterwards.
 
 **Note:** Make sure that the server is running before the client, since the client cannot handle a server connection failure gracefully yet.
