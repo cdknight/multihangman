@@ -196,8 +196,8 @@ impl<'a> RaylibScene<'a> for GameScene<'a> {
     }
     fn has_next_scene(&self) -> bool {self.next_scene != Scenes::None}
 
-    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
-        Box::new(OpeningScene::new(client))
+    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+        Box::new(OpeningScene::new(self.client.clone()))
     }
 }
 

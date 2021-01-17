@@ -7,6 +7,7 @@ pub mod joingame;
 pub mod textbox;
 pub mod raylibscene;
 pub mod resources;
+pub mod connect;
 
 pub use raylibscene::RaylibScene; // Re-import
 

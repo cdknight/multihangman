@@ -8,7 +8,7 @@ use unicode_segmentation::UnicodeSegmentation;
 pub trait RaylibScene<'a> {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources);
     fn handle_raylib(&mut self, rl: &mut RaylibHandle);
-    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>>;
+    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a>;
     fn has_next_scene(&self) -> bool;
 }
 

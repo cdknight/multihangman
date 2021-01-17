@@ -3,6 +3,7 @@ udpclient/target
 hangmanstructs/target
 udpserver/Cargo.lock
 udpclient/Cargo.lock
+udpclient/ClientConfiguration.toml
 hangmanstructs/Cargo.lock
 
 Cargo.lock

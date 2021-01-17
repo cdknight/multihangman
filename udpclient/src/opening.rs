@@ -60,10 +60,11 @@ impl<'a> RaylibScene<'a> for OpeningScene<'a> {
         self.give_next_scene
     }
 
-    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
+    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+        let cloned_client = self.client.clone();
         match self.next_scene {
-            Scenes::NewGameWizardScene => Box::new(NewGameWizardScene::new(client)),
-            _ => Box::new(JoinGameScene::new(client))
+            Scenes::NewGameWizardScene => Box::new(NewGameWizardScene::new(cloned_client)),
+            _ => Box::new(JoinGameScene::new(cloned_client))
         }
     }
 }

@@ -122,8 +122,8 @@ impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
 
     fn has_next_scene(&self) -> bool {self.next_scene}
 
-    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
-        Box::new(GameScene::new(client))
+    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+        Box::new(GameScene::new(self.client.clone()))
     }
 }
 

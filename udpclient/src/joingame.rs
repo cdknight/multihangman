@@ -81,10 +81,10 @@ impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
     }
     fn has_next_scene(&self) -> bool {self.next_scene != Scenes::None}
 
-    fn next_scene(&self, client: Arc<HangmanClient<'static>>) -> Box<RaylibScene<'static>> {
+    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
         match self.next_scene {
-            Scenes::GameScene => Box::new(GameScene::new(client)),
-            _ => Box::new(OpeningScene::new(client))
+            Scenes::GameScene => Box::new(GameScene::new(self.client.clone())),
+            _ => Box::new(OpeningScene::new(self.client.clone()))
         }
     }
 }

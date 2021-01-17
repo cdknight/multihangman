@@ -12,6 +12,7 @@ use std::cell::RefCell;
 use udpclient::joingame::JoinGameScene;
 use udpclient::RaylibScene;
 use udpclient::resources::Resources;
+use udpclient::connect::ConnectScene;
 
 use raylib::prelude::*;
 
@@ -23,17 +24,15 @@ fn main() -> std::io::Result<()> {
 
     let res = Resources::new(&mut rl, &thread);
 
-    let mut client = HangmanClient::new("127.0.0.1:22565").unwrap();
-    let mut scene: Box<RaylibScene> = Box::new(OpeningScene::new(Arc::clone(&client)));
-
-    let mut current_scene = Scenes::OpeningScene; // TODO change this to the Scenes enum
+    let client =  HangmanClient::new("127.0.0.1:22565").unwrap();
+    let mut scene: Box<RaylibScene> = Box::new(ConnectScene::new());
 
     while !rl.window_should_close() {
         scene.handle_raylib(&mut rl);
         scene.draw_raylib(&mut rl, &thread, &res); // No next scene, keep drawing
 
         if scene.has_next_scene() {
-            scene = scene.next_scene(Arc::clone(&client));
+            scene = scene.next_scene(); // Box doesn't like moving to itself so we can't just consume self. Always make sure self is a reference
         }
     }
 
