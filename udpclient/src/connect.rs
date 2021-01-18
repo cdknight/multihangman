@@ -11,8 +11,9 @@ use crate::textbox::TextBox;
 use raylib::ease::*;
 use std::thread;
 use std::time::Duration;
+use hangmanstructs::Configurable;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Config {
     recent_ips: Vec<String>,
 
@@ -20,19 +21,16 @@ pub struct Config {
     pub file_name: String
 }
 
-impl Config {
-    pub fn from(file_name: String) -> Self {
-        let toml = fs::read_to_string(&file_name).unwrap_or_else(|e| {
-            let config = Config { recent_ips: vec![], file_name: "".to_string() }; // default
-            let toml = toml::to_string(&config).unwrap();
-            fs::write(&file_name, &toml);
-
-            toml
-        }); // create file here if it doesn't exist
-        let mut config: Config = toml::from_str(&toml).expect("Failed to parse config");
-        config.file_name = file_name;
-        config
+impl Configurable<Config> for Config {
+    fn set_file_name(&mut self, file_name: String) {
+        self.file_name = file_name;
     }
+    fn file_name(&self) -> String {
+        self.file_name.clone()
+    }
+}
+
+impl Config {
 
     pub fn add(&mut self, ip: &str) {
         self.recent_ips.push(ip.to_string());
@@ -56,7 +54,7 @@ impl ConnectScene {
     pub fn new() -> Self {
 
         Self {
-            config: Config::from("ClientConfiguration.toml".to_string()),
+            config: Config::from_file("ClientConfiguration.toml".to_string()),
             selected_ip: 0,
             give_next_scene: false,
             add_ip: false,
@@ -159,7 +157,7 @@ impl RaylibScene for ConnectScene {
     }
     fn next_scene(&self) -> Box<RaylibScene> {
         let client = self.client.as_ref().unwrap();
-        Box::new(OpeningScene::new(Arc::clone(&client)))
+        Box::new(OpeningScene::new(Arc::clone(client)))
     }
     fn has_next_scene(&self) -> bool {
         self.give_next_scene

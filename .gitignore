@@ -4,6 +4,8 @@ hangmanstructs/target
 udpserver/Cargo.lock
 udpclient/Cargo.lock
 udpclient/ClientConfiguration.toml
+udpserver/ServerConfiguration.toml
+udpserver/.env
 hangmanstructs/Cargo.lock
 
 Cargo.lock

@@ -1,6 +1,35 @@
 use serde::{Serialize, Deserialize};
+use serde::de::DeserializeOwned;
 use std::net::SocketAddr;
 use std::cmp::PartialEq;
+use std::fs;
+extern crate toml;
+
+pub trait Configurable<T> where T: Serialize, T: DeserializeOwned, T: Default, T: Configurable<T>  { // TODO make this derive
+    fn from_file(file_name: String) -> T {
+        let toml = fs::read_to_string(&file_name).unwrap_or_else(|e| {
+            let config = T::default();
+            let toml = toml::to_string(&config).unwrap();
+            fs::write(&file_name, &toml);
+
+            toml
+        }); // create file here if it doesn't exist
+
+        let mut t: T = toml::from_str(&toml).expect("Failed to parse config");
+        t.set_file_name(file_name);
+
+        t
+    }
+
+    fn to_file(&self) where Self: Serialize {
+        let toml = toml::to_string(&self).unwrap();
+        fs::write(&self.file_name(), &toml);
+    }
+
+    fn set_file_name(&mut self, file_name: String);
+    fn file_name(&self) -> String;
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct HangmanGame {
