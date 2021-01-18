@@ -35,7 +35,7 @@ impl TextBox {
         if unicode == 0x03 as char { // Backspace
             text_str.pop();
         }
-        else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() {
+        else if unicode.is_letter_lowercase() || unicode.is_letter_uppercase() || unicode.is_number_decimal_digit() || unicode.is_punctuation() {
             text_str.push(unicode);
         }
 

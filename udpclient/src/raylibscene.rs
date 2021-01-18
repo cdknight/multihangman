@@ -21,6 +21,7 @@ impl dyn RaylibScene {
         let text_width = measure_text(text, font_size);
         let text_height = (text.matches("\n").count() as i32 + 1) * (font_size + 15); // Lines of text times height expanded by font size plus fifteen
 
+        // Only draw with font if font doesn't have numbers (hacky, but we'll fix this later).
         Self::draw_text_res(d, res, text, x, y, font_size, text_color);
         d.draw_rectangle_lines_ex(Rectangle {x: (x-10) as f32, y: (y-8) as f32, width: (text_width+20) as f32, height: (text_height) as f32}, 4, rect_color);
     }
