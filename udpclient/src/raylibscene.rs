@@ -18,7 +18,7 @@ impl dyn RaylibScene {
     }
 
     pub fn draw_text_box(d: &mut RaylibDrawHandle, res: &Resources, text: &str, x: i32, y: i32, font_size: i32, text_color: raylib::core::color::Color, rect_color: raylib::core::color::Color) {
-        let text_width = measure_text(text, font_size);
+        let text_width = measure_text(text, font_size) + 6;
         let text_height = (text.matches("\n").count() as i32 + 1) * (font_size + 15); // Lines of text times height expanded by font size plus fifteen
 
         // Only draw with font if font doesn't have numbers (hacky, but we'll fix this later).

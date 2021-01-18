@@ -19,6 +19,12 @@ pub struct HangmanClient {
 
 impl HangmanClient {
     pub fn new(server: String) -> Option<Arc<HangmanClient>> { // Live for the entirety of the program
+        // Laziness... make sure the server address is valid
+        match server.to_socket_addrs() {
+            Err(_) => return None,
+            _ => {},
+        };
+
         let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
         let (thread_send, event_recv) = mpsc::channel();
 

@@ -8,6 +8,9 @@ use crate::resources::Resources;
 use std::fs;
 use serde::{Serialize, Deserialize};
 use crate::textbox::TextBox;
+use raylib::ease::*;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
@@ -45,6 +48,8 @@ pub struct ConnectScene {
     give_next_scene: bool,
     add_ip: bool, // draw add box instead of other scene
     add_ip_buffer: String,
+    client: Option<Arc<HangmanClient>>,
+    failed_connect: bool
 }
 
 impl ConnectScene {
@@ -55,43 +60,52 @@ impl ConnectScene {
             selected_ip: 0,
             give_next_scene: false,
             add_ip: false,
-            add_ip_buffer: String::new()
+            add_ip_buffer: String::new(),
+            failed_connect: false,
+            client: None
         }
-    }
-    pub fn client(&self) -> Arc<HangmanClient> {
-        let ip = self.config.recent_ips[self.selected_ip].clone();
-        HangmanClient::new(ip).unwrap()
     }
 }
 
 impl RaylibScene for ConnectScene {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
-        let mut d = rl.begin_drawing(thread);
-        d.clear_background(raylib::core::color::Color::WHITE);
-        RaylibScene::draw_text_res(&mut d, &res, "Connect", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
-        if !self.add_ip {
+        {
+            let mut d = rl.begin_drawing(thread);
+            d.clear_background(raylib::core::color::Color::WHITE);
+            RaylibScene::draw_text_res(&mut d, &res, "Connect", 40, 30, 24, raylib::core::color::Color::BLACK); // title text
+            if !self.add_ip {
 
-            let mut y = 150;
-            for (i, ip) in self.config.recent_ips.iter().enumerate() {
-                let mut rect_color = Color::BLACK;
-                if self.selected_ip == i {
-                    rect_color = Color::ORANGE;
+                let mut y = 150;
+                for (i, ip) in self.config.recent_ips.iter().enumerate() {
+                    let mut rect_color = Color::BLACK;
+                    if self.selected_ip == i {
+                        rect_color = Color::ORANGE;
+                    }
+                    RaylibScene::draw_text_box(&mut d, &res, &ip, 300, y, 24, Color::BLACK, rect_color);
+                    y += 40;
                 }
-                RaylibScene::draw_text_box(&mut d, &res, &ip, 300, y, 24, Color::BLACK, rect_color);
-                y += 40;
-            }
 
-            let add_ip_color = if self.selected_ip == self.config.recent_ips.len() {
-                Color::ORANGE
+                let add_ip_color = if self.selected_ip == self.config.recent_ips.len() {
+                    Color::ORANGE
+                }
+                else {
+                    Color::BLACK
+                };
+                RaylibScene::draw_text_box(&mut d, &res, "Add IP", 300, y, 24, Color::BLACK, add_ip_color);
+
+                if self.failed_connect {
+                    RaylibScene::draw_text_box(&mut d, &res, "Couldn't connect to that server.", 300, 40, 24, Color::RED, Color::RED); // error box
+                }
             }
             else {
-                Color::BLACK
-            };
-            RaylibScene::draw_text_box(&mut d, &res, "Add IP", 300, y, 24, Color::BLACK, add_ip_color);
+                RaylibScene::draw_text_res(&mut d, &res, "Add IP", 290, 210, 24, Color::BLACK);
+                RaylibScene::draw_input_box(&mut d, &res, &self.add_ip_buffer, 300, 250, 24);
+            }
         }
-        else {
-            RaylibScene::draw_text_res(&mut d, &res, "Add IP", 290, 210, 24, Color::BLACK);
-            RaylibScene::draw_input_box(&mut d, &res, &self.add_ip_buffer, 300, 250, 24);
+
+        if self.failed_connect {
+            thread::sleep(Duration::from_millis(500));
+            self.failed_connect = false;
         }
     }
     fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
@@ -112,20 +126,31 @@ impl RaylibScene for ConnectScene {
                         // Add the IP to the config
                         self.config.add(&self.add_ip_buffer);
                         self.add_ip = false;
-                        println!("Hello?");
                     }
                     else if self.selected_ip == self.config.recent_ips.len() || self.config.recent_ips.len() == 0 { // Allow the user to add another IP
                         self.add_ip = true;
                         self.selected_ip = 0;
                     }
-                    else {
-                        self.give_next_scene = true
+                    else { // Create the client here too
+                        let ip = self.config.recent_ips[self.selected_ip].clone();
+                        let client = HangmanClient::new(ip);
+
+                        match client {
+                            Some(c) => {
+                                self.client = Some(c);
+                                self.give_next_scene = true;
+                            },
+                            None => {
+                                self.failed_connect = true
+                            }
+                        };
+
                     }
                 },
                 _ => {
                     let mut unicode = key as i32 as u8 as char;
                     if unicode == ';' {
-                        unicode = ':'; // hack because the unicode to char thing doesn't work so well
+                        unicode = ':'; // hack because the unicode to char thing doesn't work so well (you can't type shift and expect it to work, hah)
                     }
                     self.add_ip_buffer = TextBox::process_input_str(&mut self.add_ip_buffer, unicode);
                 },
@@ -133,7 +158,8 @@ impl RaylibScene for ConnectScene {
         }
     }
     fn next_scene(&self) -> Box<RaylibScene> {
-        Box::new(OpeningScene::new(self.client()))
+        let client = self.client.as_ref().unwrap();
+        Box::new(OpeningScene::new(Arc::clone(&client)))
     }
     fn has_next_scene(&self) -> bool {
         self.give_next_scene
