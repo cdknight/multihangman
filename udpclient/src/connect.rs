@@ -16,6 +16,7 @@ pub struct Config {
 pub struct ConnectScene {
     config: Config,
     selected_ip: usize, // vec index
+    give_next_scene: bool,
 }
 
 impl ConnectScene {
@@ -33,14 +34,16 @@ impl ConnectScene {
         Self {
             config: settings,
             selected_ip: 0,
+            give_next_scene: false
         }
     }
-    pub fn client(&self) -> Arc<HangmanClient<'static>> {
-        HangmanClient::new("127.0.0.1:22565").unwrap()
+    pub fn client(&self) -> Arc<HangmanClient> {
+        let ip = self.config.recent_ips[self.selected_ip].clone() + ":22565";
+        HangmanClient::new(ip).unwrap()
     }
 }
 
-impl<'a> RaylibScene<'a> for ConnectScene {
+impl RaylibScene for ConnectScene {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         let mut d = rl.begin_drawing(thread);
         d.clear_background(raylib::core::color::Color::WHITE);
@@ -70,14 +73,17 @@ impl<'a> RaylibScene<'a> for ConnectScene {
                         self.selected_ip += 1;
                     }
                 },
+                KeyboardKey::KEY_ENTER => {
+                    self.give_next_scene = true
+                },
                 _ => {},
             }
         }
     }
-    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+    fn next_scene(&self) -> Box<RaylibScene> {
         Box::new(OpeningScene::new(self.client()))
     }
     fn has_next_scene(&self) -> bool {
-        false
+        self.give_next_scene
     }
 }

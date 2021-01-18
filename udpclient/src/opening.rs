@@ -7,14 +7,14 @@ use crate::newgamewizard::NewGameWizardScene;
 use crate::resources::Resources;
 use raylib::prelude::*;
 
-pub struct OpeningScene<'a> {
+pub struct OpeningScene {
     next_scene: Scenes,
     give_next_scene: bool,
-    client: Arc<HangmanClient<'a>>,
+    client: Arc<HangmanClient>,
 }
 
-impl<'a> OpeningScene<'a> {
-    pub fn new(client: Arc<HangmanClient<'a>>) -> OpeningScene<'a> {
+impl OpeningScene {
+    pub fn new(client: Arc<HangmanClient>) -> OpeningScene {
         OpeningScene {
             give_next_scene: false,
             client,
@@ -24,7 +24,7 @@ impl<'a> OpeningScene<'a> {
 
 }
 
-impl<'a> RaylibScene<'a> for OpeningScene<'a> {
+impl<'a> RaylibScene for OpeningScene {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         let mut d = rl.begin_drawing(thread);
         d.clear_background(raylib::core::color::Color::WHITE);
@@ -60,7 +60,7 @@ impl<'a> RaylibScene<'a> for OpeningScene<'a> {
         self.give_next_scene
     }
 
-    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+    fn next_scene(&self) -> Box<RaylibScene> {
         let cloned_client = self.client.clone();
         match self.next_scene {
             Scenes::NewGameWizardScene => Box::new(NewGameWizardScene::new(cloned_client)),

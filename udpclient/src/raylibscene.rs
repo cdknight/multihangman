@@ -5,14 +5,14 @@ use crate::resources::Resources;
 use raylib::prelude::*;
 use unicode_segmentation::UnicodeSegmentation;
 
-pub trait RaylibScene<'a> {
+pub trait RaylibScene {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources);
     fn handle_raylib(&mut self, rl: &mut RaylibHandle);
-    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a>;
+    fn next_scene(&self) -> Box<RaylibScene>;
     fn has_next_scene(&self) -> bool;
 }
 
-impl<'a> dyn RaylibScene<'a> {
+impl dyn RaylibScene {
     pub fn draw_text_res(d: &mut RaylibDrawHandle, res: &Resources, text: &str, x: i32, y: i32, font_size: i32, text_color: Color) {
         d.draw_text_ex(&res.font, text, Vector2 { x: x as f32, y: y as f32}, font_size as f32, 1., text_color)
     }
@@ -28,6 +28,7 @@ impl<'a> dyn RaylibScene<'a> {
     pub fn draw_input_box(d: &mut RaylibDrawHandle, res: &Resources, text: &str, x: i32, y: i32, font_size: i32) {
         let mut last_char_width = 0;
         let mut text_width = 0;
+
         if text.len() > 0 {
             let graphemes = text.graphemes(true).collect::<Vec<&str>>();
 
@@ -35,7 +36,6 @@ impl<'a> dyn RaylibScene<'a> {
             last_char_width = measure_text(graphemes[graphemes.len() - 1], font_size);
         }
         else { // Text is zero, add a magic width to draw the blank
-
             text_width = measure_text("a", font_size);
             last_char_width = measure_text("a", font_size);
         }

@@ -7,9 +7,9 @@ use std::thread; // ow
 use std::collections::VecDeque;
 
 #[derive(Debug)]
-pub struct HangmanClient<'a> {
+pub struct HangmanClient {
     socket: UdpSocket,
-    server: &'a str,
+    server: String,
     event_recv: Mutex<mpsc::Receiver<HangmanEventResponse>>,
     want_response: RwLock<bool>,
     pub game: Mutex<Option<HangmanGame>>,
@@ -17,8 +17,8 @@ pub struct HangmanClient<'a> {
     pub event_queue: Mutex<VecDeque<HangmanEvent>>
 }
 
-impl<'a> HangmanClient<'a> {
-    pub fn new(server: &'static str) -> Option<Arc<HangmanClient<'static>>> { // Live for the entirety of the program
+impl HangmanClient {
+    pub fn new(server: String) -> Option<Arc<HangmanClient>> { // Live for the entirety of the program
         let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
         let (thread_send, event_recv) = mpsc::channel();
 
@@ -121,7 +121,7 @@ impl<'a> HangmanClient<'a> {
     pub fn send_event(&self, ev: HangmanEvent) -> Result<HangmanEventResponse, std::io::Error> {
         let serialized_ev = bincode::serialize(&ev).unwrap(); // Todo DO something with unwrap
 
-        self.socket.send_to(&serialized_ev, self.server)?;
+        self.socket.send_to(&serialized_ev, &self.server)?;
         {
             *self.want_response.write().unwrap() = true; // Tell the thread to explicitly serialize HangmanEventResponse so the serializer doesn't get confused
         }
@@ -198,7 +198,7 @@ impl<'a> HangmanClient<'a> {
 
     }
 
-    pub fn listen(client: Arc<HangmanClient<'static>>, thread_send: mpsc::Sender<HangmanEventResponse>) {
+    pub fn listen(client: Arc<HangmanClient>, thread_send: mpsc::Sender<HangmanEventResponse>) {
         thread::spawn(move|| {
             loop {
                 let ts_clone = thread_send.clone(); // Clone thread_sender

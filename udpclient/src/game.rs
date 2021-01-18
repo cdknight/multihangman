@@ -13,19 +13,19 @@ use crate::textbox::TextBox;
 use crate::resources::Resources;
 use raylib::prelude::*;
 
-pub struct GameScene<'a> {
+pub struct GameScene {
     // UI elements
     guess_chars: Vec<String>,
-    client: Arc<HangmanClient<'a>>,
+    client: Arc<HangmanClient>,
     next_scene: Scenes,
     attempts: String,
     wrong_guesses: String,
     wrong_guess_timeout: Option<u64>
 }
 
-impl<'a> GameScene<'a> {
+impl GameScene {
 
-    pub fn new(client: Arc<HangmanClient<'a>>) -> GameScene<'a> {
+    pub fn new(client: Arc<HangmanClient>) -> GameScene {
 
         let mut attempts = String::from("Attempts: ");
         let mut wrong_guesses  = String::from("Wrong Guesses: ");
@@ -153,7 +153,7 @@ impl<'a> GameScene<'a> {
     }
 }
 
-impl<'a> RaylibScene<'a> for GameScene<'a> {
+impl RaylibScene for GameScene {
 
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         {
@@ -196,7 +196,7 @@ impl<'a> RaylibScene<'a> for GameScene<'a> {
     }
     fn has_next_scene(&self) -> bool {self.next_scene != Scenes::None}
 
-    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+    fn next_scene(&self) -> Box<RaylibScene> {
         Box::new(OpeningScene::new(self.client.clone()))
     }
 }

@@ -17,16 +17,16 @@ use crate::textbox::TextBox;
 use raylib::prelude::*;
 use crate::resources::Resources;
 
-pub struct JoinGameScene<'a> { // TODO make this list all the current games
+pub struct JoinGameScene { // TODO make this list all the current games
     game_id: u64,
     next_scene: Scenes,
-    client: Arc<HangmanClient<'a>>,
+    client: Arc<HangmanClient>,
     show_error: bool,
 }
 
-impl<'a> JoinGameScene<'a> {
+impl JoinGameScene {
 
-    pub fn new(client: Arc<HangmanClient<'a>>) -> JoinGameScene<'a> {
+    pub fn new(client: Arc<HangmanClient>) -> JoinGameScene {
         JoinGameScene {
             next_scene: Scenes::None,
             game_id: 0,
@@ -37,7 +37,7 @@ impl<'a> JoinGameScene<'a> {
 
 }
 
-impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
+impl RaylibScene for JoinGameScene {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         {
             let mut d = rl.begin_drawing(thread);
@@ -81,7 +81,7 @@ impl<'a> RaylibScene<'a> for JoinGameScene<'a> {
     }
     fn has_next_scene(&self) -> bool {self.next_scene != Scenes::None}
 
-    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+    fn next_scene(&self) -> Box<RaylibScene> {
         match self.next_scene {
             Scenes::GameScene => Box::new(GameScene::new(self.client.clone())),
             _ => Box::new(OpeningScene::new(self.client.clone()))

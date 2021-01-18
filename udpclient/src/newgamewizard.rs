@@ -12,9 +12,9 @@ use crate::resources::Resources;
 use crate::opening::OpeningScene;
 
 // #[derive(Debug)]
-pub struct NewGameWizardScene<'a> {
+pub struct NewGameWizardScene {
     // UI elements
-    client: Arc<HangmanClient<'a>>,
+    client: Arc<HangmanClient>,
 
     pub guess_str: String,
     pub max_guesses: u16,
@@ -28,9 +28,9 @@ pub struct NewGameWizardScene<'a> {
 
     wizard: WizardStatus,
 }
-impl<'a> NewGameWizardScene<'a> {
+impl NewGameWizardScene {
 
-    pub fn new(client: Arc<HangmanClient<'a>>) -> NewGameWizardScene<'a> {
+    pub fn new(client: Arc<HangmanClient>) -> NewGameWizardScene {
         let guess_str = String::from("");
         let mut prompt_str = String::from("");
         let mut instructions = String::from("What's the word you'd like to guess?\n\n\nPress ENTER to continue");
@@ -51,7 +51,7 @@ impl<'a> NewGameWizardScene<'a> {
 
 }
 
-impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
+impl RaylibScene for NewGameWizardScene {
 
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources) {
         let mut d = rl.begin_drawing(thread);
@@ -122,7 +122,7 @@ impl<'a> RaylibScene<'a> for NewGameWizardScene<'a> {
 
     fn has_next_scene(&self) -> bool {self.next_scene}
 
-    fn next_scene(&self) -> Box<RaylibScene<'a> + 'a> {
+    fn next_scene(&self) -> Box<RaylibScene> {
         Box::new(GameScene::new(self.client.clone()))
     }
 }

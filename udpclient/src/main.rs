@@ -24,7 +24,7 @@ fn main() -> std::io::Result<()> {
 
     let res = Resources::new(&mut rl, &thread);
 
-    let client =  HangmanClient::new("127.0.0.1:22565").unwrap();
+    // let client =  HangmanClient::new("127.0.0.1:22565").unwrap();
     let mut scene: Box<RaylibScene> = Box::new(ConnectScene::new());
 
     while !rl.window_should_close() {
