@@ -3,6 +3,7 @@ extern crate bincode;
 use std::net::*;
 use hangmanstructs::*;
 use std::sync::{Arc, Mutex};
+pub mod db;
 
 pub struct HangmanServer {
     pub socket: UdpSocket,

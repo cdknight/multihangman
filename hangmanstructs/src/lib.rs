@@ -5,6 +5,19 @@ use std::cmp::PartialEq;
 use std::fs;
 extern crate toml;
 
+#[cfg(feature="sql")]
+#[macro_use]
+extern crate diesel_derive_enum;
+#[cfg(feature="sql")]
+#[macro_use]
+extern crate diesel;
+#[cfg(feature="sql")]
+#[macro_use]
+use diesel::prelude::*;
+
+
+
+
 pub trait Configurable<T> where T: Serialize, T: DeserializeOwned, T: Default, T: Configurable<T>  { // TODO make this derive
     fn from_file(file_name: String) -> T {
         let toml = fs::read_to_string(&file_name).unwrap_or_else(|e| {
