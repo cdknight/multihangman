@@ -6,16 +6,22 @@ use std::sync::{Arc, Mutex};
 
 #[macro_use]
 extern crate diesel;
+use diesel::prelude::*;
+use crate::schema::*;
 
 pub mod config;
 pub mod schema;
 pub mod db;
+
+#[cfg(test)]
+pub mod tests;
 
 pub struct HangmanServer {
     pub socket: UdpSocket,
     pub games: Mutex<Vec<HangmanGame>>,
     pub users: Mutex<Vec<User>>
 }
+
 
 
 impl HangmanServer {
