@@ -3,6 +3,12 @@ extern crate bincode;
 use std::net::*;
 use hangmanstructs::*;
 use std::sync::{Arc, Mutex};
+
+#[macro_use]
+extern crate diesel;
+
+pub mod config;
+pub mod schema;
 pub mod db;
 
 pub struct HangmanServer {
