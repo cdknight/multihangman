@@ -46,12 +46,12 @@ pub trait Configurable<T> where T: Serialize, T: DeserializeOwned, T: Default, T
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct HangmanGame {
-    pub word: String,
-    pub guesses: Vec<Guess>,
-    pub max_guesses: u16,
-    creator: User, // Because the client
-    mode: GameMode,
     pub id: u64, // Will return this back when a GameCreate event happens,
+    pub mode: GameMode,
+    pub word: String,
+    pub max_guesses: u16,
+    pub creator: User, // Because the client
+    pub guesses: Vec<Guess>,
     pub players: Vec<User>,
 }
 
@@ -74,8 +74,9 @@ pub enum GameMode {
 #[cfg_attr(feature="sql", derive(Queryable))]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Guess {
+    pub id: Option<i32>,
+    pub user: User,
     pub guess: String,
-    pub user: User
 }
 
 impl PartialEq for Guess {
@@ -87,7 +88,6 @@ impl PartialEq for Guess {
     }
 }
 
-#[cfg_attr(feature="sql", derive(Queryable))]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct User {
     pub ip: SocketAddr // Temporary, till I set up a DB
@@ -103,32 +103,4 @@ pub enum HangmanEvent {
 pub enum HangmanEventResponse {
     GameCreated(u64), LoginSuccess(User), LoginFailure, GameJoined(HangmanGame), SyncRejected, BadGuess,
     Ok, Err
-}
-
-
-#[cfg(feature="sql")]
-#[derive(Queryable)]
-pub struct GamesPlayers  {
-    pub id: i32,
-    pub game_id: i32,
-    pub user_id: i32,
-}
-
-#[cfg(feature="sql")]
-#[derive(Queryable)]
-pub struct GamesGuesses {
-    pub id: i32,
-    pub game_id: i32,
-    pub guess_id: i32,
-}
-
-
-#[cfg(feature="sql")]
-#[derive(Queryable)]
-pub struct DbGame { // TODO implement a bunch of stuff to abstract over the join tables
-    pub word: String,
-    pub max_guesses: u16,
-    pub creator: User, // Because the client
-    pub mode: GameMode,
-    pub id: u64, // Will return this back when a GameCreate event happens,
 }

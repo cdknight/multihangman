@@ -70,6 +70,7 @@ impl HangmanClient {
         let mut game = game.as_mut().unwrap();
 
         let guess = Guess {
+            id: None, // not for the DB
             user,
             guess: guess_str,
         };
