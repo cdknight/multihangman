@@ -41,6 +41,15 @@ impl DbUser {
             .expect("Couldn't save user")
 
     }
+
+    pub fn join_game(&mut self, c: &PgConnection, g: &DbGame) {
+        let upd_user = diesel::update(users::dsl::users.find(self.id))
+            .set(users::game_id.eq(g.id))
+            .get_result::<DbUser>(c)
+            .unwrap();
+
+        *self = upd_user;
+    }
 }
 
 
@@ -86,16 +95,24 @@ pub struct NewDbGame { // TODO implement a bunch of stuff to abstract over the j
 }
 
 impl DbGame {
-    pub fn from(c: &PgConnection, id: i32) -> (DbGame, DbUser) {
+    pub fn from(c: &PgConnection, id: i32) -> (DbGame, DbUser, Vec<DbUser>) {
 
         use diesel::BelongingToDsl;
         let dbgame = games::table
-            .inner_join(users::table)
             .filter(games::id.eq(id))
-            .select((games::all_columns, (users::all_columns)))
-            .first::<(DbGame, DbUser)>(c).unwrap();
+            .select(games::all_columns)
+            .first::<DbGame>(c).unwrap();
 
-        dbgame
+        let creator = users::table // I would rather do this a more efficient way [with join tables somehow], but it seems I can't.
+            .filter(users::id.eq(dbgame.creator_id))
+            .select(users::all_columns)
+            .first::<DbUser>(c).unwrap();
+
+        let players = DbUser::belonging_to(&dbgame)
+            .select(users::all_columns)
+            .load::<DbUser>(c).unwrap();
+
+        (dbgame, creator, players)
     }
 
     pub fn new(c: &PgConnection, mode: GameMode, word: String, max_guesses: i32, creator_id: i32) -> DbGame {
