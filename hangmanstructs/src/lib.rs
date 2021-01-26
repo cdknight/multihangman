@@ -76,7 +76,7 @@ pub struct Guess {
     pub id: Option<i32>,
     pub user: User,
     pub guess: String,
-    pub game_id: Option<i32> // just like, dunno, set this to -1 if this is coming from the client? We have to make a NewGuess class obviously
+    // pub game_id: Option<i32> // just like, dunno, set this to -1 if this is coming from the client? We have to make a NewGuess class obviously
 }
 
 impl PartialEq for Guess {
@@ -95,8 +95,9 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HangmanEvent {
-     GameCreate(HangmanGame), Login, Sync(u64, Guess), JoinGame(u64), Disconnect, GameWon(User), GameDraw
+     GameCreate(HangmanGame), Login(String, String), Sync(u64, Guess), JoinGame(u64), Disconnect, GameWon(User), GameDraw
     // Sync is sent to all users in a game.
+    // Login is String, String
 }
 
 #[derive(Serialize, Deserialize, Debug)]

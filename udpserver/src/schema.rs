@@ -23,6 +23,7 @@ table! {
         id -> Int4,
         username -> Varchar,
         game_id -> Nullable<Int4>,
+        password -> Varchar,
     }
 }
 

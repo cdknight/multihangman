@@ -4,6 +4,7 @@ use hangmanstructs::Configurable;
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct ServerConfig {
     pub db_url: String,
+    pub secret_key: String,
 
     #[serde(skip)]
     pub file_name: String

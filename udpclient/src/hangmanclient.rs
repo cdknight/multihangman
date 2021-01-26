@@ -42,7 +42,7 @@ impl HangmanClient {
         Self::listen(Arc::clone(&client_ref), thread_send); // Listen for events.
 
         // Try to log in
-        let login_response = client_ref.send_event(HangmanEvent::Login).unwrap();
+        let login_response = client_ref.send_event(HangmanEvent::Login("nonuser".to_string(), "letmein".to_string())).unwrap();
         println!("Login response is {:?}", login_response);
         if let HangmanEventResponse::LoginSuccess(user) = login_response {
             let mut user_mut = client_ref.user.lock().unwrap();

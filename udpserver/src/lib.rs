@@ -2,26 +2,35 @@ extern crate bincode;
 
 use std::net::*;
 use hangmanstructs::*;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
 #[macro_use]
 extern crate diesel;
 use diesel::prelude::*;
+use diesel::pg::PgConnection;
+
 use crate::schema::*;
 
 pub mod config;
 pub mod schema;
 pub mod db;
 
+
 #[cfg(test)]
 pub mod tests;
+
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+    static ref CONFIG: config::ServerConfig = config::ServerConfig::from_file("ServerConfiguration.toml".to_string());
+}
 
 pub struct HangmanServer {
     pub socket: UdpSocket,
     pub games: Mutex<Vec<HangmanGame>>,
-    pub users: Mutex<Vec<User>>
+    pub users: Mutex<Vec<User>>,
 }
-
 
 
 impl HangmanServer {
@@ -57,8 +66,10 @@ impl HangmanServer {
         let user = User { ip: src };
 
         match event {
-            HangmanEvent::Login => {
+            HangmanEvent::Login(username, password) => {
                 println!("Here");
+                let c = db::conn();
+                db::DbUser::auth(&c, username, password);
                 server.respond_to_event(&user, HangmanEventResponse::LoginSuccess(user.clone()))
             },
             HangmanEvent::GameCreate(game)  => {

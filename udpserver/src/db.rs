@@ -1,16 +1,16 @@
 use diesel::prelude::*;
 use diesel::*;
 use diesel::pg::PgConnection;
+use argonautica::Hasher;
 
 use crate::config::ServerConfig;
 use crate::schema::*;
 use hangmanstructs::{Configurable, User, GameMode};
 use serde::{Serialize, Deserialize};
+use crate::CONFIG;
 
 pub fn conn() -> PgConnection {
-    let config = ServerConfig::from_file("ServerConfiguration.toml".to_string());
-
-    PgConnection::establish(&config.db_url)
+    PgConnection::establish(&CONFIG.db_url)
         .expect("Couldn't connect to database. Check your configuration!")
 }
 
@@ -25,20 +25,40 @@ pub struct DbUser {
 #[table_name = "users"]
 pub struct NewDbUser {
     pub username: String,
-    pub game_id: Option<i32>
+    pub game_id: Option<i32>,
+    pub password: String
 }
 
 impl DbUser {
-    pub fn new(c: &PgConnection, username: String) -> DbUser {
+    fn hash(password: String) -> String {
+        let mut hasher = Hasher::default();
+        hasher
+            .with_password(password)
+            .with_secret_key(&CONFIG.secret_key)
+            .hash()
+            .unwrap()
+    }
+    pub fn new(c: &PgConnection, username: String, password: String) -> DbUser {
 
         let ndbu = NewDbUser {
-            username, game_id: None
+            username, game_id: None, password: Self::hash(password)
         };
 
         diesel::insert_into(users::table)
             .values(&ndbu)
             .get_result(c)
             .expect("Couldn't save user")
+
+    }
+
+    pub fn auth(c: &PgConnection, username: String, password: String) {
+
+        let hash = Self::hash(password);
+        let user = users::table.filter(users::password.eq(hash))
+            .first::<DbUser>(c);
+
+        println!("user is {:?}", user);
+
 
     }
 
@@ -61,7 +81,8 @@ impl DbUser {
 pub struct DbUser {
     pub id: i32,
     pub username: String,
-    pub game_id: Option<i32>
+    pub game_id: Option<i32>,
+    pub password: String
 }
 
 #[derive(Queryable, Identifiable, Debug, Associations)]
