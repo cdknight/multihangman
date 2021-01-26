@@ -5,43 +5,17 @@ use crate::opening::OpeningScene;
 use raylib::prelude::*;
 use crate::raylibscene::RaylibScene;
 use crate::resources::Resources;
-use std::fs;
-use serde::{Serialize, Deserialize};
 use crate::textbox::TextBox;
 use raylib::ease::*;
 use std::thread;
 use std::time::Duration;
+use crate::Config;
+use crate::CONFIG;
 use hangmanstructs::Configurable;
 
-#[derive(Serialize, Deserialize, Debug, Default)]
-pub struct Config {
-    recent_ips: Vec<String>,
 
-    #[serde(skip)]
-    pub file_name: String
-}
-
-impl Configurable<Config> for Config {
-    fn set_file_name(&mut self, file_name: String) {
-        self.file_name = file_name;
-    }
-    fn file_name(&self) -> String {
-        self.file_name.clone()
-    }
-}
-
-impl Config {
-
-    pub fn add(&mut self, ip: &str) {
-        self.recent_ips.push(ip.to_string());
-
-        let toml = toml::to_string(&self).unwrap();
-        fs::write(&self.file_name, &toml);
-    }
-}
 
 pub struct ConnectScene {
-    config: Config,
     selected_ip: usize, // vec index
     give_next_scene: bool,
     add_ip: bool, // draw add box instead of other scene
@@ -54,7 +28,6 @@ impl ConnectScene {
     pub fn new() -> Self {
 
         Self {
-            config: Config::from_file("ClientConfiguration.toml".to_string()),
             selected_ip: 0,
             give_next_scene: false,
             add_ip: false,
@@ -74,7 +47,7 @@ impl RaylibScene for ConnectScene {
             if !self.add_ip {
 
                 let mut y = 150;
-                for (i, ip) in self.config.recent_ips.iter().enumerate() {
+                for (i, ip) in CONFIG.read().unwrap().recent_ips.iter().enumerate() {
                     let mut rect_color = Color::BLACK;
                     if self.selected_ip == i {
                         rect_color = Color::ORANGE;
@@ -83,7 +56,7 @@ impl RaylibScene for ConnectScene {
                     y += 40;
                 }
 
-                let add_ip_color = if self.selected_ip == self.config.recent_ips.len() {
+                let add_ip_color = if self.selected_ip == CONFIG.read().unwrap().recent_ips.len() {
                     Color::ORANGE
                 }
                 else {
@@ -115,22 +88,22 @@ impl RaylibScene for ConnectScene {
                     }
                 },
                 KeyboardKey::KEY_DOWN => {
-                    if self.selected_ip <= self.config.recent_ips.len() { // We allow user to go "equal" to the length of the array. The "equal" case is when the user wants to add something
+                    if self.selected_ip <= CONFIG.read().unwrap().recent_ips.len() { // We allow user to go "equal" to the length of the array. The "equal" case is when the user wants to add something
                         self.selected_ip += 1;
                     }
                 },
                 KeyboardKey::KEY_ENTER => {
                     if self.add_ip {
                         // Add the IP to the config
-                        self.config.add(&self.add_ip_buffer);
+                        CONFIG.write().unwrap().add(&self.add_ip_buffer);
                         self.add_ip = false;
                     }
-                    else if self.selected_ip == self.config.recent_ips.len() || self.config.recent_ips.len() == 0 { // Allow the user to add another IP
+                    else if self.selected_ip == CONFIG.read().unwrap().recent_ips.len() || CONFIG.read().unwrap().recent_ips.len() == 0 { // Allow the user to add another IP
                         self.add_ip = true;
                         self.selected_ip = 0;
                     }
                     else { // Create the client here too
-                        let ip = self.config.recent_ips[self.selected_ip].clone();
+                        let ip = CONFIG.read().unwrap().recent_ips[self.selected_ip].clone();
                         let client = HangmanClient::new(ip);
 
                         match client {

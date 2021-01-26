@@ -5,6 +5,7 @@ use std::sync::{Arc, RwLock, Mutex, mpsc};
 use hangmanstructs::*;
 use std::thread; // ow
 use std::collections::VecDeque;
+use crate::CONFIG;
 
 #[derive(Debug)]
 pub struct HangmanClient {
@@ -42,7 +43,8 @@ impl HangmanClient {
         Self::listen(Arc::clone(&client_ref), thread_send); // Listen for events.
 
         // Try to log in
-        let login_response = client_ref.send_event(HangmanEvent::Login("nonuser".to_string(), "letmein".to_string())).unwrap();
+        let unwrap_cfg = CONFIG.read().unwrap();
+        let login_response = client_ref.send_event(HangmanEvent::Login(unwrap_cfg.username.clone(), unwrap_cfg.password.clone())).unwrap();
         println!("Login response is {:?}", login_response);
         if let HangmanEventResponse::LoginSuccess(user) = login_response {
             let mut user_mut = client_ref.user.lock().unwrap();

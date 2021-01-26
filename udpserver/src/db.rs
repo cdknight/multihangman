@@ -70,6 +70,15 @@ impl DbUser {
 
         *self = upd_user;
     }
+
+    pub fn leave_game(&mut self, c: &PgConnection) {
+        let upd_user = diesel::update(users::dsl::users.find(self.id))
+            .set(users::game_id.eq::<Option<i32>>(None))
+            .get_result::<DbUser>(c)
+            .unwrap();
+
+        *self = upd_user;
+    }
 }
 
 

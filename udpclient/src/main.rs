@@ -13,6 +13,7 @@ use udpclient::joingame::JoinGameScene;
 use udpclient::RaylibScene;
 use udpclient::resources::Resources;
 use udpclient::connect::ConnectScene;
+use udpclient::Config;
 
 use raylib::prelude::*;
 
