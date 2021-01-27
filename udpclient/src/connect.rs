@@ -95,7 +95,7 @@ impl RaylibScene for ConnectScene {
                 KeyboardKey::KEY_ENTER => {
                     if self.add_ip {
                         // Add the IP to the config
-                        CONFIG.write().unwrap().add(&self.add_ip_buffer);
+                        CONFIG.write().unwrap().add_ip(&self.add_ip_buffer);
                         self.add_ip = false;
                     }
                     else if self.selected_ip == CONFIG.read().unwrap().recent_ips.len() || CONFIG.read().unwrap().recent_ips.len() == 0 { // Allow the user to add another IP
@@ -118,6 +118,13 @@ impl RaylibScene for ConnectScene {
 
                     }
                 },
+                KeyboardKey::KEY_D => {
+                    if !self.add_ip && CONFIG.read().unwrap().recent_ips.len() > 0 { // Allow the user to add another IP
+                        CONFIG.write().unwrap().remove_ip(self.selected_ip);
+                        self.selected_ip -= 1;
+                    }
+                   
+                }
                 _ => {
                     let mut unicode = key as i32 as u8 as char;
                     if unicode == ';' {

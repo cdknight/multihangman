@@ -16,14 +16,17 @@ pub enum Scenes {
     JoinGameScene, OpeningScene, NewGameWizardScene, GameScene, None
 }
 
+#[macro_use]
+extern crate lazy_static;
+extern crate keyring;
 
 use serde::{Serialize, Deserialize};
 use hangmanstructs::Configurable;
 use std::fs;
 use std::sync::RwLock;
+use keyring::Keyring;
 
-#[macro_use]
-extern crate lazy_static;
+
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Config {
@@ -46,8 +49,15 @@ impl Configurable<Config> for Config {
 
 impl Config {
 
-    pub fn add(&mut self, ip: &str) {
+    pub fn add_ip(&mut self, ip: &str) {
         self.recent_ips.push(ip.to_string());
+
+        let toml = toml::to_string(&self).unwrap();
+        fs::write(&self.file_name, &toml);
+    }
+
+    pub fn remove_ip(&mut self, i: usize) {
+        self.recent_ips.remove(i);
 
         let toml = toml::to_string(&self).unwrap();
         fs::write(&self.file_name, &toml);
