@@ -10,8 +10,9 @@ use raylib::ease::*;
 use std::thread;
 use std::time::Duration;
 use crate::Config;
-use crate::CONFIG;
+use crate::{CONFIG, SERVICE};
 use hangmanstructs::Configurable;
+use keyring::Keyring;
 
 
 
@@ -22,7 +23,7 @@ pub struct ConnectScene {
     add_ip: bool, // draw add box instead of other scene
     new_server_buffers: Vec<String>,
     client: Option<Arc<HangmanClient>>,
-    failed_connect: bool
+    failed_connect: bool,
 }
 
 impl ConnectScene {
@@ -35,7 +36,7 @@ impl ConnectScene {
             add_ip: false,
             new_server_buffers: vec![String::default(); 3],
             failed_connect: false,
-            client: None
+            client: None,
         }
     }
 }
@@ -49,12 +50,12 @@ impl RaylibScene for ConnectScene {
             if !self.add_ip {
 
                 let mut y = 150;
-                for (i, ip) in CONFIG.read().unwrap().recent_ips.iter().enumerate() {
+                for (i, ipusername) in CONFIG.read().unwrap().recent_ips.iter().enumerate() {
                     let mut rect_color = Color::BLACK;
                     if self.selected_ip == i {
                         rect_color = Color::ORANGE;
                     }
-                    RaylibScene::draw_text_box(&mut d, &res, &ip, 300, y, 24, Color::BLACK, rect_color);
+                    RaylibScene::draw_text_box(&mut d, &res, &ipusername.ip, 300, y, 24, Color::BLACK, rect_color);
                     y += 40;
                 }
 
@@ -77,7 +78,11 @@ impl RaylibScene for ConnectScene {
                 RaylibScene::draw_text_res(&mut d, &res, "Username", 290, 290, 24, Color::BLACK);
                 RaylibScene::draw_input_box(&mut d, &res, &self.new_server_buffers[1], 425, 290, 24); // TODO use arrow keys to navigate
                 RaylibScene::draw_text_res(&mut d, &res, "Password", 290, 330, 24, Color::BLACK);
-                RaylibScene::draw_input_box(&mut d, &res, &self.new_server_buffers[2], 425, 330, 24);
+
+                let password_template = (0..self.new_server_buffers[2].len()).map(|_| "*").collect::<String>();
+                RaylibScene::draw_input_box(&mut d, &res, &password_template, 425, 330, 24);
+
+                RaylibScene::draw_text_res(&mut d, &res, "Press ENTER to add", 290, 370, 24, Color::BLACK);
 
                 // Draw arrow
                 d.draw_triangle(
@@ -97,11 +102,11 @@ impl RaylibScene for ConnectScene {
 
     fn handle_raylib(&mut self, rl: &mut RaylibHandle) {
         if self.add_ip {
-            TextBox::push_input(&mut self.new_server_buffers[self.selected_insert_buffer]);
+            TextBox::push_input(&mut self.new_server_buffers[self.selected_insert_buffer]); // Unsafe function. Also, GetCharPressed only works before GetKeyPressed for some strange reason.
         }
         if let Some(key) = rl.get_key_pressed() {
             match key {
-                KeyboardKey::KEY_BACKSPACE if self.add_ip => {
+                KeyboardKey::KEY_BACKSPACE if self.add_ip => { // This actually goes with the textbox handler, so we have to find a better way to handle input eventually.
                     self.new_server_buffers[self.selected_insert_buffer].pop();
                     ()
                 },
@@ -124,7 +129,7 @@ impl RaylibScene for ConnectScene {
                 KeyboardKey::KEY_ENTER => {
                     if self.add_ip {
                         // Add the IP to the config
-                        CONFIG.write().unwrap().add_ip(&self.new_server_buffers[0]);
+                        CONFIG.write().unwrap().add_configset(&self.new_server_buffers[0], &self.new_server_buffers[1], &self.new_server_buffers[2]);
                         self.add_ip = false;
                     }
                     else if self.selected_ip == CONFIG.read().unwrap().recent_ips.len() || CONFIG.read().unwrap().recent_ips.len() == 0 { // Allow the user to add another IP
@@ -133,7 +138,10 @@ impl RaylibScene for ConnectScene {
                     }
                     else { // Create the client here too
                         let ip = CONFIG.read().unwrap().recent_ips[self.selected_ip].clone();
-                        let client = HangmanClient::new(ip);
+                        let keyring = Keyring::new(SERVICE, &ip.username);
+                        let password = keyring.get_password().unwrap();
+
+                        let client = HangmanClient::new(ip.ip, ip.username, password);
 
                         match client {
                             Some(c) => {
@@ -150,7 +158,7 @@ impl RaylibScene for ConnectScene {
                 KeyboardKey::KEY_D if !self.add_ip => {
                     if CONFIG.read().unwrap().recent_ips.len() > 0 { // Allow the user to add another IP
                         CONFIG.write().unwrap().remove_ip(self.selected_ip);
-                        self.selected_ip -= 1;
+                        self.selected_ip -= if CONFIG.read().unwrap().recent_ips.len() == 0 { 0 } else { 1 };
                     }
                    
                 }

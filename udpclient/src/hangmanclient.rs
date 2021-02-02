@@ -5,7 +5,8 @@ use std::sync::{Arc, RwLock, Mutex, mpsc};
 use hangmanstructs::*;
 use std::thread; // ow
 use std::collections::VecDeque;
-use crate::CONFIG;
+use crate::{CONFIG, SERVICE};
+use keyring::Keyring;
 
 #[derive(Debug)]
 pub struct HangmanClient {
@@ -19,7 +20,7 @@ pub struct HangmanClient {
 }
 
 impl HangmanClient {
-    pub fn new(server: String) -> Option<Arc<HangmanClient>> { // Live for the entirety of the program
+    pub fn new(server: String, username: String, password: String) -> Option<Arc<HangmanClient>> { // Live for the entirety of the program
         // Laziness... make sure the server address is valid
         match server.to_socket_addrs() {
             Err(_) => return None,
@@ -43,8 +44,7 @@ impl HangmanClient {
         Self::listen(Arc::clone(&client_ref), thread_send); // Listen for events.
 
         // Try to log in
-        let unwrap_cfg = CONFIG.read().unwrap();
-        let login_response = client_ref.send_event(HangmanEvent::Login(unwrap_cfg.username.clone(), unwrap_cfg.password.clone())).unwrap();
+        let login_response = client_ref.send_event(HangmanEvent::Login(username.clone(), password.clone())).unwrap();
         println!("Login response is {:?}", login_response);
         if let HangmanEventResponse::LoginSuccess(user) = login_response {
             let mut user_mut = client_ref.user.lock().unwrap();

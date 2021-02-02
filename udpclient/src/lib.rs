@@ -26,13 +26,14 @@ use std::fs;
 use std::sync::RwLock;
 use keyring::Keyring;
 
-
-
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct IpUsernamePair {
+    ip: String,
+    username: String
+}
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Config {
-    recent_ips: Vec<String>,
-    username: String,
-    password: String,
+    recent_ips: Vec<IpUsernamePair>,
 
     #[serde(skip)]
     pub file_name: String
@@ -49,8 +50,10 @@ impl Configurable<Config> for Config {
 
 impl Config {
 
-    pub fn add_ip(&mut self, ip: &str) {
-        self.recent_ips.push(ip.to_string());
+    pub fn add_configset(&mut self, ip: &str, username: &str, password: &str) {
+        self.recent_ips.push( IpUsernamePair { ip: ip.to_string(), username: username.to_string() });
+        let keyring = Keyring::new(SERVICE, username);
+        keyring.set_password(password);
 
         let toml = toml::to_string(&self).unwrap();
         fs::write(&self.file_name, &toml);
@@ -64,6 +67,7 @@ impl Config {
     }
 }
 
+static SERVICE: &'static str = "hangmanudpclient";
 lazy_static! {
     static ref CONFIG: RwLock<Config> = RwLock::new(Config::from_file("ClientConfiguration.toml".to_string()));
 }
