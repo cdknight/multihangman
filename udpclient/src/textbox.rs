@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use unicode_categories::UnicodeCategories;
+use raylib::ffi::GetCharPressed;
 
 pub struct TextBox;
 
@@ -40,5 +41,18 @@ impl TextBox {
         }
 
         text_str.to_string()
+    }
+
+    pub fn push_input(input: &mut String) {
+        // Basically copied from the raylib example code
+        unsafe {
+            let mut key = GetCharPressed();
+            while (key > 0) {
+                if key >= 32 && key <= 125 {
+                    input.push(key as u8 as char);
+                }
+                key = GetCharPressed();
+            }
+        }
     }
 }

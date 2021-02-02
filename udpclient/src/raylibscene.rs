@@ -3,6 +3,7 @@ use std::rc::Rc;
 use crate::hangmanclient::HangmanClient;
 use crate::resources::Resources;
 use raylib::prelude::*;
+use raylib::ffi;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub trait RaylibScene {
@@ -53,5 +54,11 @@ impl dyn RaylibScene {
 
     pub fn draw_rectangle_lines_width(d: &mut RaylibDrawHandle, x: i32, y: i32, width: i32, height: i32, stroke: i32, color: Color) {
         d.draw_rectangle_lines_ex(Rectangle {x: x as f32, y: y as f32, width: width as f32, height: height as f32}, stroke, color);
+    }
+
+    pub fn key_to_char(k: &KeyboardKey) -> char { // nightmare
+        println!("{:?}", k);
+
+        'a'
     }
 }
