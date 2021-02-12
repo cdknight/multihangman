@@ -6,7 +6,10 @@ use crate::joingame::JoinGameScene;
 use crate::newgamewizard::NewGameWizardScene;
 use crate::resources::Resources;
 use raylib::prelude::*;
+use raylibscene_macro_derive::ClientGetter;
+use crate::raylibscene::ClientGetter;
 
+#[derive(ClientGetter)]
 pub struct OpeningScene {
     next_scene: Scenes,
     give_next_scene: bool,

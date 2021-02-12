@@ -6,7 +6,10 @@ use raylib::prelude::*;
 use raylib::ffi;
 use unicode_segmentation::UnicodeSegmentation;
 
-pub trait RaylibScene {
+pub trait ClientGetter {
+    fn client(&self) -> Option<Arc<HangmanClient>>;
+}
+pub trait RaylibScene where Self: ClientGetter {
     fn draw_raylib(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, res: &Resources);
     fn handle_raylib(&mut self, rl: &mut RaylibHandle);
     fn next_scene(&self) -> Box<RaylibScene>;

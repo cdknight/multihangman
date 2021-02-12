@@ -1,2 +1,2 @@
 [workspace]
-members = ["udpclient", "udpserver", "hangmanstructs"]
+members = ["udpclient", "udpserver", "hangmanstructs", "raylibscene_macro_derive"]

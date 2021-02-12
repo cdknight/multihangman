@@ -12,7 +12,10 @@ use crate::RaylibScene;
 use crate::textbox::TextBox;
 use crate::resources::Resources;
 use raylib::prelude::*;
+use raylibscene_macro_derive::ClientGetter;
+use crate::raylibscene::ClientGetter;
 
+#[derive(ClientGetter)]
 pub struct GameScene {
     // UI elements
     guess_chars: Vec<String>,

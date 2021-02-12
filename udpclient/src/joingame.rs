@@ -16,7 +16,10 @@ use crate::Scenes;
 use crate::textbox::TextBox;
 use raylib::prelude::*;
 use crate::resources::Resources;
+use crate::raylibscene::ClientGetter;
+use raylibscene_macro_derive::ClientGetter;
 
+#[derive(ClientGetter)]
 pub struct JoinGameScene { // TODO make this list all the current games
     game_id: u64,
     next_scene: Scenes,

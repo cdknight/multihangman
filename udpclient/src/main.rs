@@ -14,6 +14,7 @@ use udpclient::RaylibScene;
 use udpclient::resources::Resources;
 use udpclient::connect::ConnectScene;
 use udpclient::Config;
+use udpclient::raylibscene::ClientGetter;
 
 use raylib::prelude::*;
 
@@ -36,6 +37,8 @@ fn main() -> std::io::Result<()> {
             scene = scene.next_scene(); // Box doesn't like moving to itself so we can't just consume self. Always make sure self is a reference
         }
     }
+
+    if let Some(client) = scene.client() { client.disconnect() };
 
     println!("Thanks for playing!");
     Ok(())

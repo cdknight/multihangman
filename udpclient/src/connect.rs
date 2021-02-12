@@ -13,6 +13,7 @@ use crate::Config;
 use crate::{CONFIG, SERVICE};
 use hangmanstructs::Configurable;
 use keyring::Keyring;
+use crate::raylibscene::ClientGetter;
 
 
 
@@ -38,6 +39,15 @@ impl ConnectScene {
             failed_connect: false,
             client: None,
         }
+    }
+}
+
+impl ClientGetter for ConnectScene {
+    fn client(&self) -> Option<Arc<HangmanClient>> {
+        if let Some(client) = &self.client {
+            return Some(Arc::clone(&client));
+        }
+        None // There's probably an easier way to do this, but I don't know how.
     }
 }
 

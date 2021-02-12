@@ -8,9 +8,9 @@ use crate::db;
 #[structopt(about = "MultiHangman Server CLI")]
 pub enum Opt {
     Server {
-        #[structopt(short, long)]
+        #[structopt(default_value = "127.0.0.1", short, long)]
         host: String,
-        #[structopt(short, long)]
+        #[structopt(default_value = "22565", short, long)]
         port: u32
     },
     Db(Db)

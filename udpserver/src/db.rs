@@ -67,7 +67,7 @@ impl DbUser {
                 .with_secret_key(&CONFIG.secret_key)
                 .verify()
                 .unwrap();
-            println!("{}", is_valid);
+
             if is_valid {
                 return Some(unwrapped_user)
             }

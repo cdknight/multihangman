@@ -12,6 +12,10 @@ use crate::resources::Resources;
 use crate::opening::OpeningScene;
 
 // #[derive(Debug)]
+use raylibscene_macro_derive::ClientGetter;
+use crate::raylibscene::ClientGetter;
+
+#[derive(ClientGetter)]
 pub struct NewGameWizardScene {
     // UI elements
     client: Arc<HangmanClient>,
