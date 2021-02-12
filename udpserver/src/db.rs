@@ -1,12 +1,13 @@
 use diesel::prelude::*;
 use diesel::*;
 use diesel::pg::PgConnection;
-use argonautica::Hasher;
+use argonautica::{Hasher, Verifier};
 
 use crate::config::ServerConfig;
 use crate::schema::*;
 use hangmanstructs::{Configurable, User, GameMode};
 use serde::{Serialize, Deserialize};
+use structopt::StructOpt;
 use crate::CONFIG;
 
 pub fn conn() -> PgConnection {
@@ -21,11 +22,14 @@ pub struct DbUser {
     pub username: String,
 }*/
 
-#[derive(Insertable)]
+#[derive(Insertable, Debug, StructOpt)]
 #[table_name = "users"]
 pub struct NewDbUser {
+    #[structopt(short, long)]
     pub username: String,
-    pub game_id: Option<i32>,
+    #[structopt(skip)]
+    pub game_id: Option<i32>, // Why is this necessary?
+    #[structopt(short, long)]
     pub password: String
 }
 
@@ -38,11 +42,9 @@ impl DbUser {
             .hash()
             .unwrap()
     }
-    pub fn new(c: &PgConnection, username: String, password: String) -> DbUser {
+    pub fn new(c: &PgConnection, mut ndbu: NewDbUser) -> DbUser {
 
-        let ndbu = NewDbUser {
-            username, game_id: None, password: Self::hash(password)
-        };
+        ndbu.password = Self::hash(ndbu.password);
 
         diesel::insert_into(users::table)
             .values(&ndbu)
@@ -51,15 +53,30 @@ impl DbUser {
 
     }
 
-    pub fn auth(c: &PgConnection, username: String, password: String) {
+    pub fn auth(c: &PgConnection, username: String, password: String) -> Option<DbUser> {
 
-        let hash = Self::hash(password);
-        let user = users::table.filter(users::password.eq(hash))
+        let user = users::table.filter(users::username.eq(username))
             .first::<DbUser>(c);
 
-        println!("user is {:?}", user);
+        if let Ok(unwrapped_user) = user {
 
+            let mut vfr = Verifier::default();
+            let is_valid = vfr
+                .with_hash(&unwrapped_user.password)
+                .with_password(password)
+                .with_secret_key(&CONFIG.secret_key)
+                .verify()
+                .unwrap();
+            println!("{}", is_valid);
+            if is_valid {
+                return Some(unwrapped_user)
+            }
+            else {
+                return None
+            }
+        }
 
+        None
     }
 
     pub fn join_game(&mut self, c: &PgConnection, g: &DbGame) {

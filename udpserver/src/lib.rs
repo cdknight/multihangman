@@ -14,6 +14,7 @@ use crate::schema::*;
 pub mod config;
 pub mod schema;
 pub mod db;
+pub mod cli;
 
 
 #[cfg(test)]
@@ -34,9 +35,9 @@ pub struct HangmanServer {
 
 
 impl HangmanServer {
-    pub fn new() -> Result<HangmanServer, std::io::Error> {
+    pub fn new(host: String, port: u32) -> Result<HangmanServer, std::io::Error> {
 
-        let socket = UdpSocket::bind("0.0.0.0:22565")?;
+        let socket = UdpSocket::bind(&format!("{}:{}", host, port))?;
         let mut games = Mutex::new(vec![]);
         let mut users = Mutex::new(vec![]);
 
@@ -63,14 +64,12 @@ impl HangmanServer {
 
         println!("\nEvent received from {:?}:\n{:?}\n" , src, event);
 
+        let c = db::conn();
         let user = User { ip: src };
 
         match event {
             HangmanEvent::Login(username, password) => {
-                println!("Here");
-                let c = db::conn();
-                db::DbUser::auth(&c, username, password);
-                server.respond_to_event(&user, HangmanEventResponse::LoginSuccess(user.clone()))
+                server.respond_to_login_event(&user, &c, username, password)
             },
             HangmanEvent::GameCreate(game)  => {
                 server.respond_to_gamecreate_event(&user, game)
@@ -88,6 +87,15 @@ impl HangmanServer {
         }
 
 
+    }
+
+    pub fn respond_to_login_event(&self, user: &User, c: &PgConnection, username: String, password: String) -> Result<(), std::io::Error>{
+        let dbuser = db::DbUser::auth(&c, username, password);
+
+        if let None = dbuser {
+            return self.respond_to_event(&user, HangmanEventResponse::LoginFailure);
+        }
+        self.respond_to_event(&user, HangmanEventResponse::LoginSuccess(user.clone()))
     }
 
     pub fn respond_to_disconnect_event(&self, user: &User) -> Result<(), std::io::Error> {
@@ -203,7 +211,7 @@ impl HangmanServer {
     }
 
     pub fn respond_to_event(&self, user: &User, event_response: HangmanEventResponse) -> Result<(), std::io::Error>{
-        println!("Here, sending event response");
+        println!("Sending event response {:?}", event_response);
         let event_response_buffer = bincode::serialize(&event_response).expect("Failed to serialize event response!");
         self.socket.send_to(&event_response_buffer, user.ip)?;
 

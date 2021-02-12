@@ -14,3 +14,4 @@ diesel-derive-enum = { version = "1.1.0", features = ["postgres"] }
 serde = { version = "1.0", features = ["derive"] }
 argonautica = "0.2.0"
 lazy_static = "1.4.0"
+structopt = "0.3"

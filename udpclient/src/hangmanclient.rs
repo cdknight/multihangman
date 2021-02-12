@@ -49,10 +49,13 @@ impl HangmanClient {
         if let HangmanEventResponse::LoginSuccess(user) = login_response {
             let mut user_mut = client_ref.user.lock().unwrap();
             *user_mut = Some(user);
+
+            return Some(Arc::clone(&client_ref))
         }
 
+        None
+
         // Try to poll for events
-        Some(Arc::clone(&client_ref))
     }
 
     pub fn disconnect(&self) {

@@ -6,23 +6,15 @@ use std::net::SocketAddr;
 use std::io::Error;
 use udpserver::HangmanServer;
 use std::borrow::Borrow;
+use udpserver::cli::{Opt, Db, DbData};
+use udpserver::db;
+use structopt::StructOpt;
 
 fn main() -> std::io::Result<()> {
 
-    let server = Arc::new(HangmanServer::new().unwrap());
+    Opt::match_args();
+    std::process::exit(0);
 
-    {
-        loop {
-            let loop_server= Arc::clone(&server);
-
-            let (hangman_event, source_address) = loop_server.listen();
-
-            let thread_server = Arc::clone(&server);
-            thread::spawn(move|| {
-                HangmanServer::handle_event(thread_server, hangman_event, source_address);
-            });
-        }
-    }
 
 }
 
